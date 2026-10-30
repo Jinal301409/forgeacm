@@ -1,0 +1,183 @@
+@import "tailwindcss";
+
+:root {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Default Dark Mode Theme */
+  --bg-app: #0B1020;
+  --bg-surface: #11182B;
+  --bg-surface-elevated: #162038;
+  --bg-surface-header: rgba(14, 21, 40, 0.85);
+  --bg-card: rgba(17, 24, 43, 0.75);
+  --bg-card-gradient: linear-gradient(135deg, rgba(25, 34, 58, 0.6) 0%, rgba(17, 24, 43, 0.8) 100%);
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --text-dim: #64748B;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-card: rgba(255, 255, 255, 0.1);
+  --input-bg: #11182B;
+  --banner-bg: linear-gradient(to right, #111A35, #162347, #121B38);
+}
+
+html.light,
+html[data-theme="light"],
+body.light {
+  /* High-Contrast Modern GovTech Light Theme */
+  --bg-app: #F4F6FB;
+  --bg-surface: #FFFFFF;
+  --bg-surface-elevated: #F1F5F9;
+  --bg-surface-header: rgba(255, 255, 255, 0.9);
+  --bg-card: #FFFFFF;
+  --bg-card-gradient: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+  --text-main: #0B132B;
+  --text-muted: #475569;
+  --text-dim: #94A3B8;
+  --border-color: rgba(15, 23, 42, 0.12);
+  --border-card: rgba(15, 23, 42, 0.12);
+  --input-bg: #FFFFFF;
+  --banner-bg: linear-gradient(to right, #EEF2FF, #F0F9FF, #FAF5FF);
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    overflow-x: hidden;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+}
+
+/* Theme utility classes */
+.app-bg {
+  background-color: var(--bg-app) !important;
+  color: var(--text-main);
+}
+
+.app-surface {
+  background-color: var(--bg-surface) !important;
+  color: var(--text-main);
+}
+
+.app-text {
+  color: var(--text-main) !important;
+}
+
+.app-text-muted {
+  color: var(--text-muted) !important;
+}
+
+.app-border {
+  border-color: var(--border-color) !important;
+}
+
+.app-banner {
+  background: var(--banner-bg) !important;
+}
+
+/* Glassmorphism utilities adaptable to light & dark */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-card);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+}
+
+.glass-card {
+  background: var(--bg-card-gradient);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-card);
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.08);
+  transition: all 0.25s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(71, 123, 255, 0.4);
+  box-shadow: 0 12px 30px -10px rgba(71, 123, 255, 0.18);
+}
+
+/* Light mode specific fine-tuning */
+html.light .glass-card {
+  background: #FFFFFF;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.05);
+}
+
+html.light .glass-card:hover {
+  border-color: rgba(71, 123, 255, 0.4);
+  box-shadow: 0 12px 25px -5px rgba(71, 123, 255, 0.12);
+}
+
+html.light .glass-panel {
+  background: #FFFFFF;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 25px -4px rgba(0, 0, 0, 0.06);
+}
+
+html.light input,
+html.light select,
+html.light textarea {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+.glow-blue {
+  box-shadow: 0 0 25px rgba(71, 123, 255, 0.25);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 25px rgba(56, 217, 230, 0.25);
+}
+
+.glow-violet {
+  box-shadow: 0 0 25px rgba(137, 104, 255, 0.25);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-dim);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Leaflet map customization */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.75rem;
+  background-color: var(--bg-app) !important;
+  font-family: inherit;
+  z-index: 10;
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--bg-surface) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-card) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--bg-surface) !important;
+}
