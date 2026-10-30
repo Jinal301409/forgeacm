@@ -72,18 +72,39 @@ export const CivicMapPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // Determine current tile URL based on chosen style and theme
-  const getTileUrl = (style: MapTileStyle, currentTheme: string) => {
+  // Tile Layer Configuration (100% free, zero API key required, no watermarks)
+  const getTileConfig = (style: MapTileStyle, currentTheme: string) => {
     if (style === 'satellite') {
-      return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      return {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attribution: 'Tiles &copy; Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+        maxZoom: 19,
+        maxNativeZoom: 19,
+      };
     }
     if (style === 'streets') {
-      return 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+      return {
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+        maxNativeZoom: 19,
+      };
     }
-    // 'auto': Dark Carto in dark mode, Positron Light in light mode
-    return currentTheme === 'dark'
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    // 'auto': Esri Dark Gray in dark mode, OpenStreetMap in light mode
+    if (currentTheme === 'dark') {
+      return {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+        attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+        maxZoom: 19,
+        maxNativeZoom: 16,
+      };
+    }
+    return {
+      url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+      maxNativeZoom: 19,
+    };
   };
 
   // Initialize Map
@@ -94,16 +115,16 @@ export const CivicMapPage: React.FC = () => {
     const map = L.map(mapContainerRef.current, {
       center: [23.0372, 72.5532],
       zoom: 13,
-      zoomControl: false, // We'll add custom positioned zoom control
+      zoomControl: false,
     });
 
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    const initialTileUrl = getTileUrl(tileStyle, theme);
-    const tileLayer = L.tileLayer(initialTileUrl, {
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO / Esri',
-      subdomains: 'abcd',
-      maxZoom: 19,
+    const config = getTileConfig(tileStyle, theme);
+    const tileLayer = L.tileLayer(config.url, {
+      attribution: config.attribution,
+      maxZoom: config.maxZoom,
+      maxNativeZoom: config.maxNativeZoom,
     }).addTo(map);
     tileLayerRef.current = tileLayer;
 
@@ -132,9 +153,18 @@ export const CivicMapPage: React.FC = () => {
 
   // Update Tile Layer when tileStyle or theme changes
   useEffect(() => {
-    if (!mapInstanceRef.current || !tileLayerRef.current) return;
-    const newUrl = getTileUrl(tileStyle, theme);
-    tileLayerRef.current.setUrl(newUrl);
+    if (!mapInstanceRef.current) return;
+    const config = getTileConfig(tileStyle, theme);
+    if (tileLayerRef.current) {
+      mapInstanceRef.current.removeLayer(tileLayerRef.current);
+    }
+    const newTileLayer = L.tileLayer(config.url, {
+      attribution: config.attribution,
+      maxZoom: config.maxZoom,
+      maxNativeZoom: config.maxNativeZoom,
+    }).addTo(mapInstanceRef.current);
+    tileLayerRef.current = newTileLayer;
+    newTileLayer.bringToBack();
   }, [tileStyle, theme]);
 
   // Locate User GPS
