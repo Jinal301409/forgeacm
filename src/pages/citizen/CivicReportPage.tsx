@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
   Camera,
@@ -18,14 +18,26 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 export const CivicReportPage: React.FC = () => {
   const { user, token } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const paramLat = searchParams.get('lat');
+  const paramLng = searchParams.get('lng');
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<any>('Potholes');
-  const [location, setLocation] = useState('Navrangpura Bus Junction, Ahmedabad, Gujarat');
-  const [address, setAddress] = useState('Near Commerce Six Roads, Navrangpura, Ahmedabad');
-  const [latitude, setLatitude] = useState<number>(23.0372);
-  const [longitude, setLongitude] = useState<number>(72.5532);
+  const [location, setLocation] = useState(
+    paramLat && paramLng
+      ? `Geo-Pinned Location (${Number(paramLat).toFixed(4)}, ${Number(paramLng).toFixed(4)})`
+      : 'Navrangpura Bus Junction, Ahmedabad, Gujarat'
+  );
+  const [address, setAddress] = useState(
+    paramLat && paramLng
+      ? `Coordinates: ${paramLat}, ${paramLng}`
+      : 'Near Commerce Six Roads, Navrangpura, Ahmedabad'
+  );
+  const [latitude, setLatitude] = useState<number>(paramLat ? parseFloat(paramLat) : 23.0372);
+  const [longitude, setLongitude] = useState<number>(paramLng ? parseFloat(paramLng) : 72.5532);
   const [imagePreview, setImagePreview] = useState<string>(
     'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80'
   );
