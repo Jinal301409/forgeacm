@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { FactCheck } from '../../types';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const FactVerificationPage: React.FC = () => {
   const { token } = useAuth();
@@ -29,8 +30,8 @@ export const FactVerificationPage: React.FC = () => {
   const [history, setHistory] = useState<FactCheck[]>([]);
 
   useEffect(() => {
-    fetch('/api/fact-check')
-      .then((r) => r.json())
+    apiFetch('/api/fact-check')
+      .then((r) => safeJson(r))
       .then((d) => setHistory(d.factChecks || []))
       .catch((err) => console.error('Failed to load fact checks:', err));
   }, []);
@@ -54,7 +55,7 @@ export const FactVerificationPage: React.FC = () => {
     setError('');
     setIsAnalyzing(true);
     try {
-      const res = await fetch('/api/fact-check/analyze', {
+      const res = await apiFetch('/api/fact-check/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,7 +69,7 @@ export const FactVerificationPage: React.FC = () => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || 'Failed to verify claim.');
 
       setCurrentResult(data.factCheck);

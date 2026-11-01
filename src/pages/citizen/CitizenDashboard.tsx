@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const CitizenDashboard: React.FC = () => {
   const { user, token } = useAuth();
@@ -26,10 +27,10 @@ export const CitizenDashboard: React.FC = () => {
 
   useEffect(() => {
     if (!token) return;
-    fetch('/api/dashboard/citizen', {
+    apiFetch('/api/dashboard/citizen', {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.json())
+      .then((r) => safeJson(r))
       .then((d) => {
         setData(d);
         setLoading(false);

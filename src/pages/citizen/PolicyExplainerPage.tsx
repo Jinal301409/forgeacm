@@ -20,6 +20,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage, SupportedLanguage, LANGUAGES } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const PolicyExplainerPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -56,8 +57,8 @@ export const PolicyExplainerPage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    fetch('/api/policies')
-      .then((r) => r.json())
+    apiFetch('/api/policies')
+      .then((r) => safeJson(r))
       .then((d) => {
         setPolicies(d.policies || []);
         if (id) {
@@ -80,7 +81,7 @@ export const PolicyExplainerPage: React.FC = () => {
     setError('');
     setAudioUrl(null);
     try {
-      const res = await fetch(`/api/policies/${policyId}/explain`, {
+      const res = await apiFetch(`/api/policies/${policyId}/explain`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,7 +90,7 @@ export const PolicyExplainerPage: React.FC = () => {
         body: JSON.stringify({ targetLanguage: targetLang }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || 'Failed to generate explanation.');
       setExplanation(data.explanation);
       setChatMessages([]);
@@ -118,7 +119,7 @@ export const PolicyExplainerPage: React.FC = () => {
     setIsLoadingAudio(true);
     try {
       const textToSpeak = `${explanation.simpleExplanation}. Key point: ${(explanation.keyPointsSummary || []).slice(0, 2).join('. ')}`;
-      const res = await fetch('/api/tts', {
+      const res = await apiFetch('/api/tts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +128,7 @@ export const PolicyExplainerPage: React.FC = () => {
         body: JSON.stringify({ text: textToSpeak }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
+        const err = await safeJson(res).catch(() => ({}));
         throw new Error(err.error || 'Voice generation unavailable.');
       }
       const blob = await res.blob();
@@ -153,12 +154,12 @@ export const PolicyExplainerPage: React.FC = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch('/api/policies/extract', {
+      const res = await apiFetch('/api/policies/extract', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token || ''}` },
         body: formData,
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || 'Could not parse document.');
 
       setUploadContent(data.text || '');
@@ -181,7 +182,7 @@ export const PolicyExplainerPage: React.FC = () => {
     setIsAnswering(true);
 
     try {
-      const res = await fetch(`/api/policies/${selectedPolicy.id}/ask`, {
+      const res = await apiFetch(`/api/policies/${selectedPolicy.id}/ask`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -190,7 +191,7 @@ export const PolicyExplainerPage: React.FC = () => {
         body: JSON.stringify({ question: q }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || 'Failed to get answer.');
       setChatMessages((prev) => [...prev, { role: 'assistant', text: data.answer }]);
     } catch (err: any) {
@@ -209,7 +210,7 @@ export const PolicyExplainerPage: React.FC = () => {
 
     setIsUploading(true);
     try {
-      const res = await fetch('/api/policies/upload', {
+      const res = await apiFetch('/api/policies/upload', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -226,7 +227,7 @@ export const PolicyExplainerPage: React.FC = () => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || 'Upload failed.');
 
       setPolicies([data.policy, ...policies]);

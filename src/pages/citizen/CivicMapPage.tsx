@@ -21,6 +21,7 @@ import { CivicReport } from '../../types';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { apiFetch, safeJson } from '../../utils/api';
 
 type MapTileStyle = 'auto' | 'streets' | 'satellite';
 
@@ -63,8 +64,8 @@ export const CivicMapPage: React.FC = () => {
   // Fetch civic reports
   useEffect(() => {
     setLoading(true);
-    fetch('/api/reports')
-      .then((r) => r.json())
+    apiFetch('/api/reports')
+      .then((r) => safeJson(r))
       .then((d) => {
         setReports(d.reports || []);
       })

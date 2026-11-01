@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { PolicyDocument } from '../../types';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const PolicyManagementPage: React.FC = () => {
   const { token } = useAuth();
@@ -25,8 +26,8 @@ export const PolicyManagementPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch('/api/policies')
-      .then((r) => r.json())
+    apiFetch('/api/policies')
+      .then((r) => safeJson(r))
       .then((d) => setPolicies(d.policies || []))
       .catch((err) => console.error('Failed to load policies:', err));
   }, []);
@@ -37,7 +38,7 @@ export const PolicyManagementPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/policies/upload', {
+      const res = await apiFetch('/api/policies/upload', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +53,7 @@ export const PolicyManagementPage: React.FC = () => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error);
 
       setPolicies([data.policy, ...policies]);

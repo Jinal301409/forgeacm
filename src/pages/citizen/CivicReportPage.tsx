@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const CivicReportPage: React.FC = () => {
   const { user, token } = useAuth();
@@ -107,7 +108,7 @@ export const CivicReportPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/reports', {
+      const res = await apiFetch('/api/reports', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,7 +127,7 @@ export const CivicReportPage: React.FC = () => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) {
         throw new Error(data.error || 'Failed to submit report.');
       }

@@ -7,6 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
+import type { Db } from 'mongodb';
 import { getDb, isMongoConnected, DB_NAME } from './mongodb.js';
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
@@ -347,6 +348,21 @@ function cleanDocs<T>(docs: any[]): T[] {
   return docs.map((d) => cleanDoc<T>(d));
 }
 
+export function isProductionDatabaseRequired(): boolean {
+  const uri = process.env.MONGODB_URI;
+  const isRealMongoConfigured = Boolean(uri && !uri.includes('<username>') && !uri.includes('<password>'));
+  return process.env.NODE_ENV === 'production' || isRealMongoConfigured;
+}
+
+export function getDatabaseOrThrow(): Db | null {
+  const mongo = getDb();
+  if (mongo) return mongo;
+  if (isProductionDatabaseRequired()) {
+    throw new Error('Database service unavailable: MongoDB Atlas is required in production and is currently disconnected.');
+  }
+  return null;
+}
+
 // =========================================================================
 // MONGODB ATLAS UNIFIED REPOSITORY LAYER (CRUD WITH ZERO-CONFIG FALLBACK)
 // =========================================================================
@@ -354,7 +370,7 @@ function cleanDocs<T>(docs: any[]): T[] {
 export const dbService = {
   // ── USERS ─────────────────────────────────────────────────────────────
   async findUserById(id: string): Promise<User | null> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const doc = await mongo.collection('users').findOne({ id });
       return cleanDoc<User>(doc);
@@ -364,7 +380,7 @@ export const dbService = {
 
   async findUserByEmail(email: string): Promise<User | null> {
     const norm = email.toLowerCase().trim();
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const doc = await mongo.collection('users').findOne({ email: norm });
       return cleanDoc<User>(doc);
@@ -373,7 +389,7 @@ export const dbService = {
   },
 
   async createUser(user: User): Promise<User> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('users').insertOne({ ...user });
       return user;
@@ -384,7 +400,7 @@ export const dbService = {
   },
 
   async updateUser(id: string, updates: Partial<User>): Promise<User | null> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('users').updateOne({ id }, { $set: updates });
       const doc = await mongo.collection('users').findOne({ id });
@@ -398,7 +414,7 @@ export const dbService = {
   },
 
   async listUsers(filter?: { role?: string; search?: string }): Promise<User[]> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const query: any = {};
       if (filter?.role && filter.role !== 'All') query.role = filter.role;
@@ -422,7 +438,7 @@ export const dbService = {
 
   // ── POLICIES & EXPLANATIONS ──────────────────────────────────────────
   async listPolicies(filter?: { category?: string; search?: string; language?: string }): Promise<PolicyDocument[]> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const query: any = {};
       if (filter?.category && filter.category !== 'All') {
@@ -453,7 +469,7 @@ export const dbService = {
   },
 
   async getPolicyById(id: string): Promise<PolicyDocument | null> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const doc = await mongo.collection('policies').findOne({ id });
       return cleanDoc<PolicyDocument>(doc);
@@ -462,7 +478,7 @@ export const dbService = {
   },
 
   async createPolicy(policy: PolicyDocument): Promise<PolicyDocument> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('policies').insertOne({ ...policy });
       return policy;
@@ -473,7 +489,7 @@ export const dbService = {
   },
 
   async incrementPolicyViews(id: string): Promise<void> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('policies').updateOne({ id }, { $inc: { views: 1 } });
       return;
@@ -486,7 +502,7 @@ export const dbService = {
   },
 
   async getPolicyExplanations(documentId: string): Promise<PolicyExplanation[]> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const docs = await mongo.collection('policy_explanations').find({ documentId }).toArray();
       return cleanDocs<PolicyExplanation>(docs);
@@ -495,7 +511,7 @@ export const dbService = {
   },
 
   async createPolicyExplanation(explanation: PolicyExplanation): Promise<PolicyExplanation> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('policy_explanations').insertOne({ ...explanation });
       return explanation;
@@ -507,7 +523,7 @@ export const dbService = {
 
   // ── SCHEMES ───────────────────────────────────────────────────────────
   async listSchemes(filter?: { category?: string; state?: string; search?: string }): Promise<Scheme[]> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const query: any = {};
       if (filter?.category && filter.category !== 'All') {
@@ -540,7 +556,7 @@ export const dbService = {
   },
 
   async getSchemeById(id: string): Promise<Scheme | null> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const doc = await mongo.collection('government_schemes').findOne({ id });
       return cleanDoc<Scheme>(doc);
@@ -550,7 +566,7 @@ export const dbService = {
 
   // ── CIVIC REPORTS ─────────────────────────────────────────────────────
   async listReports(filter?: { category?: string; severity?: string; status?: string; search?: string; limit?: number; userId?: string }): Promise<CivicReport[]> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const query: any = {};
       if (filter?.userId) query.userId = filter.userId;
@@ -580,7 +596,7 @@ export const dbService = {
   },
 
   async getReportById(idOrReportId: string): Promise<CivicReport | null> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const doc = await mongo.collection('civic_reports').findOne({
         $or: [{ id: idOrReportId }, { reportId: idOrReportId }],
@@ -591,7 +607,7 @@ export const dbService = {
   },
 
   async createReport(report: CivicReport): Promise<CivicReport> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('civic_reports').insertOne({ ...report });
       return report;
@@ -602,7 +618,7 @@ export const dbService = {
   },
 
   async updateReport(idOrReportId: string, updates: Partial<CivicReport>): Promise<CivicReport | null> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('civic_reports').updateOne(
         { $or: [{ id: idOrReportId }, { reportId: idOrReportId }] },
@@ -621,7 +637,7 @@ export const dbService = {
   },
 
   async addReportComment(idOrReportId: string, comment: any): Promise<CivicReport | null> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('civic_reports').updateOne(
         { $or: [{ id: idOrReportId }, { reportId: idOrReportId }] },
@@ -642,7 +658,7 @@ export const dbService = {
 
   // ── FACT CHECKS ───────────────────────────────────────────────────────
   async listFactChecks(): Promise<FactCheck[]> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const docs = await mongo.collection('fact_checks').find().sort({ verifiedTimestamp: -1 }).toArray();
       return cleanDocs<FactCheck>(docs);
@@ -651,7 +667,7 @@ export const dbService = {
   },
 
   async getFactCheckById(id: string): Promise<FactCheck | null> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const doc = await mongo.collection('fact_checks').findOne({ id });
       return cleanDoc<FactCheck>(doc);
@@ -660,7 +676,7 @@ export const dbService = {
   },
 
   async createFactCheck(factCheck: FactCheck): Promise<FactCheck> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('fact_checks').insertOne({ ...factCheck });
       return factCheck;
@@ -672,7 +688,7 @@ export const dbService = {
 
   // ── PUBLIC APPLICATIONS ───────────────────────────────────────────────
   async listApplicationsByUser(userId: string): Promise<PublicApplication[]> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const docs = await mongo.collection('applications').find({ userId }).sort({ updatedAt: -1 }).toArray();
       return cleanDocs<PublicApplication>(docs);
@@ -681,7 +697,7 @@ export const dbService = {
   },
 
   async getApplicationById(id: string, userId?: string): Promise<PublicApplication | null> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const query: any = { id };
       if (userId) query.userId = userId;
@@ -692,7 +708,7 @@ export const dbService = {
   },
 
   async createApplication(app: PublicApplication): Promise<PublicApplication> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('applications').insertOne({ ...app });
       return app;
@@ -703,7 +719,7 @@ export const dbService = {
   },
 
   async updateApplication(id: string, updates: Partial<PublicApplication>): Promise<PublicApplication | null> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('applications').updateOne({ id }, { $set: updates });
       const doc = await mongo.collection('applications').findOne({ id });
@@ -717,7 +733,7 @@ export const dbService = {
   },
 
   async deleteApplication(id: string, userId: string): Promise<boolean> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const res = await mongo.collection('applications').deleteOne({ id, userId });
       return res.deletedCount > 0;
@@ -731,7 +747,7 @@ export const dbService = {
 
   // ── NOTIFICATIONS ─────────────────────────────────────────────────────
   async listNotificationsByUser(userId: string): Promise<Notification[]> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const docs = await mongo.collection('notifications').find({ userId }).sort({ createdAt: -1 }).toArray();
       return cleanDocs<Notification>(docs);
@@ -740,7 +756,7 @@ export const dbService = {
   },
 
   async countUnreadNotifications(userId: string): Promise<number> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       return await mongo.collection('notifications').countDocuments({ userId, read: false });
     }
@@ -758,7 +774,7 @@ export const dbService = {
       link,
       createdAt: new Date().toISOString(),
     };
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('notifications').insertOne({ ...notif });
       return notif;
@@ -769,7 +785,7 @@ export const dbService = {
   },
 
   async markNotificationRead(id: string, userId: string): Promise<boolean> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const res = await mongo.collection('notifications').updateOne({ id, userId }, { $set: { read: true } });
       return res.modifiedCount > 0;
@@ -782,7 +798,7 @@ export const dbService = {
   },
 
   async markAllNotificationsRead(userId: string): Promise<void> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('notifications').updateMany({ userId }, { $set: { read: true } });
       return;
@@ -793,7 +809,7 @@ export const dbService = {
 
   // ── BOOKMARKS ─────────────────────────────────────────────────────────
   async listBookmarksByUser(userId: string): Promise<Bookmark[]> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const docs = await mongo.collection('bookmarks').find({ userId }).sort({ createdAt: -1 }).toArray();
       return cleanDocs<Bookmark>(docs);
@@ -802,7 +818,7 @@ export const dbService = {
   },
 
   async addBookmark(bookmark: Bookmark): Promise<Bookmark> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('bookmarks').updateOne(
         { userId: bookmark.userId, itemId: bookmark.itemId },
@@ -820,7 +836,7 @@ export const dbService = {
   },
 
   async removeBookmark(userId: string, itemId: string): Promise<boolean> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const res = await mongo.collection('bookmarks').deleteOne({ userId, itemId });
       return res.deletedCount > 0;
@@ -834,7 +850,7 @@ export const dbService = {
 
   // ── AUDIT LOGS ────────────────────────────────────────────────────────
   async createAuditLog(log: AuditLog): Promise<AuditLog> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       await mongo.collection('audit_logs').insertOne({ ...log });
       return log;
@@ -845,7 +861,7 @@ export const dbService = {
   },
 
   async listAuditLogs(filter?: { action?: string; search?: string; limit?: number }): Promise<AuditLog[]> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const query: any = {};
       if (filter?.action && filter.action !== 'All') {
@@ -874,7 +890,7 @@ export const dbService = {
 
   // ── DASHBOARD AGGREGATIONS ────────────────────────────────────────────
   async getAdminMetrics(): Promise<any> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const [
         totalCitizens,
@@ -965,7 +981,7 @@ export const dbService = {
   },
 
   async getTransparencyMetrics(): Promise<any> {
-    const mongo = getDb();
+    const mongo = getDatabaseOrThrow();
     if (mongo) {
       const [reports, policiesCount, factChecksCount, schemesCount] = await Promise.all([
         mongo.collection('civic_reports').find().toArray(),

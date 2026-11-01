@@ -28,6 +28,7 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { useTheme } from '../../context/ThemeContext';
 import { HeroBackground } from '../../components/backgrounds/HeroBackground';
 import { InView } from '../../components/backgrounds/InView';
+import { apiFetch, safeJson } from '../../utils/api';
 
 // WebGL light waterfall (same effect family as Proofline); loaded only when scrolled into view
 const ZirconTorrent = lazy(() => import('../../components/backgrounds/ZirconTorrent'));
@@ -87,10 +88,15 @@ export const LandingPage: React.FC = () => {
   });
 
   useEffect(() => {
-    fetch('/api/dashboard/transparency')
-      .then((r) => (r.ok ? r.json() : null))
+    apiFetch('/api/dashboard/transparency')
+      .then(async (r) => {
+        if (!r.ok) return null;
+        return safeJson(r);
+      })
       .then((d) => { if (d) setTransparencyStats(d); })
-      .catch(() => {});
+      .catch((err) => {
+        console.warn('Transparency metrics unavailable:', err);
+      });
   }, []);
 
   const handleQuickDemo = async (role: 'citizen' | 'officer' | 'admin') => {

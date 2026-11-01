@@ -31,10 +31,10 @@ export async function connectToMongoDB(): Promise<Db | null> {
   const uri = process.env.MONGODB_URI?.trim();
   connectionAttempted = true;
 
-  if (!uri) {
-    console.warn('[MongoDB Atlas] MONGODB_URI is not set. Operating in graceful local fallback mode.');
+  if (!uri || uri.includes('<username>') || uri.includes('<password>') || uri.includes('<cluster>')) {
+    console.warn('[MongoDB Atlas] MONGODB_URI is not configured with real cluster credentials.');
     isConnected = false;
-    connectionError = 'MONGODB_URI environment variable is not defined.';
+    connectionError = 'MONGODB_URI is not defined or contains placeholder credentials.';
     return null;
   }
 
@@ -49,8 +49,8 @@ export async function connectToMongoDB(): Promise<Db | null> {
       },
       maxPoolSize: 20,
       minPoolSize: 2,
-      serverSelectionTimeoutMS: 8000,
-      connectTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 8000,
     });
 
     await client.connect();
@@ -85,6 +85,11 @@ export async function connectToMongoDB(): Promise<Db | null> {
 
     return dbInstance;
   } catch (err: any) {
+    if (client) {
+      client.close().catch(() => {});
+      client = null;
+    }
+    dbInstance = null;
     isConnected = false;
     connectionError = err.message || 'Unknown MongoDB connection error';
     console.error(`[MongoDB Atlas] Connection failed: ${connectionError}`);

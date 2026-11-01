@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Notification } from '../../types';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const NotificationsPage: React.FC = () => {
   const { token } = useAuth();
@@ -19,17 +20,17 @@ export const NotificationsPage: React.FC = () => {
 
   useEffect(() => {
     if (!token) return;
-    fetch('/api/notifications', {
+    apiFetch('/api/notifications', {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.json())
+      .then((r) => safeJson(r))
       .then((d) => setNotifications(d.notifications || []))
       .catch((err) => console.error('Failed to load notifications:', err));
   }, [token]);
 
   const markAsRead = async (id: string) => {
     try {
-      await fetch(`/api/notifications/${id}/read`, {
+      await apiFetch(`/api/notifications/${id}/read`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -43,7 +44,7 @@ export const NotificationsPage: React.FC = () => {
 
   const markAllAsRead = async () => {
     try {
-      await fetch('/api/notifications/mark-all-read', {
+      await apiFetch('/api/notifications/mark-all-read', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });

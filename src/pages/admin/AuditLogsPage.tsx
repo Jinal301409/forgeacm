@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AuditLog } from '../../types';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const AuditLogsPage: React.FC = () => {
   const { token } = useAuth();
@@ -23,14 +24,15 @@ export const AuditLogsPage: React.FC = () => {
 
   const loadLogs = async () => {
     try {
-      const url = new URL('/api/admin/audit-logs', window.location.origin);
-      if (actionFilter !== 'All') url.searchParams.set('action', actionFilter);
-      if (search) url.searchParams.set('search', search);
+      const params = new URLSearchParams();
+      if (actionFilter !== 'All') params.set('action', actionFilter);
+      if (search) params.set('search', search);
+      const queryStr = params.toString() ? `?${params.toString()}` : '';
 
-      const res = await fetch(url.toString(), {
+      const res = await apiFetch(`/api/admin/audit-logs${queryStr}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       setLogs(data.auditLogs || []);
     } catch (err) {
       console.error('Failed to load audit logs:', err);

@@ -30,6 +30,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { PageBackground, usePageEffect } from '../backgrounds/PageBackground';
 import { useLanguage, SupportedLanguage } from '../../context/LanguageContext';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const DashboardLayout: React.FC = () => {
   const { user, logout, token } = useAuth();
@@ -48,12 +49,12 @@ export const DashboardLayout: React.FC = () => {
     if (!token) return;
     const fetchUnread = async () => {
       try {
-        const res = await fetch('/api/notifications', {
+        const res = await apiFetch('/api/notifications', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = await res.json();
-          const unread = data.notifications.filter((n: any) => !n.read).length;
+          const data = await safeJson(res);
+          const unread = data.notifications ? data.notifications.filter((n: any) => !n.read).length : 0;
           setUnreadCount(unread);
         }
       } catch (err) {

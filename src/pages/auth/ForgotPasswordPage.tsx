@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Mail, Lock, KeyRound, ArrowRight, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const ForgotPasswordPage: React.FC = () => {
   const [step, setStep] = useState<1 | 2>(1);
@@ -20,12 +21,12 @@ export const ForgotPasswordPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/forgot-password', {
+      const res = await apiFetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || 'Failed to request reset code.');
 
       setMessage(data.message || 'Reset code generated.');
@@ -48,12 +49,12 @@ export const ForgotPasswordPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await apiFetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, newPassword }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || 'Failed to reset password.');
 
       setSuccess(true);

@@ -4,5 +4,26 @@ dist/
 coverage/
 .DS_Store
 *.log
-.env*
+uploads/
+
+# Environment files
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 !.env.example
+
+# Service account keys and certificates
+*service-account*.json
+*credentials*.json
+*secret*.json
+google-*.json
+gcp-*.json
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12

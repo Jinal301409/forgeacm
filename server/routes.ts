@@ -133,21 +133,27 @@ async function notifyUser(
 apiRouter.get('/health', async (_req, res: Response) => {
   try {
     const mongoHealth = await getMongoHealth();
-    const isDegraded = !mongoHealth.connected;
+    const isProd = process.env.NODE_ENV === 'production';
+    const isConnected = mongoHealth.connected;
 
-    res.status(isDegraded ? 200 : 200).json({
-      status: isDegraded ? 'degraded' : 'healthy',
+    // Disconnected database in production or when MONGODB_URI is configured reports 503
+    const statusCode = isConnected ? 200 : isProd || Boolean(process.env.MONGODB_URI) ? 503 : 200;
+
+    res.status(statusCode).json({
+      status: isConnected ? 'healthy' : 'disconnected',
       uptimeSeconds: Math.round(process.uptime()),
       timestamp: new Date().toISOString(),
       database: {
-        engine: mongoHealth.connected ? 'MongoDB Atlas' : 'Local Persistent Storage (Fallback)',
-        connected: mongoHealth.connected,
+        engine: isConnected ? 'MongoDB Atlas' : 'Local Persistent Storage (Dev Fallback)',
+        connected: isConnected,
         databaseName: DB_NAME,
         pingLatencyMs: mongoHealth.pingLatencyMs,
         collections: mongoHealth.collections,
-        note: mongoHealth.connected
+        note: isConnected
           ? 'Connected to real MongoDB Atlas cluster.'
-          : 'Operating in graceful zero-config fallback. Configure MONGODB_URI to connect MongoDB Atlas.',
+          : isProd
+            ? 'CRITICAL: MongoDB Atlas disconnected in production.'
+            : 'Operating in local development fallback mode.',
       },
       ai: {
         provider: 'Google Gemini',
@@ -277,7 +283,11 @@ apiRouter.post('/auth/register', async (req, res: Response) => {
     });
   } catch (error: any) {
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Internal server error during registration.' });
+    if (error.message?.includes('Database service unavailable')) {
+      res.status(503).json({ error: 'Database service unavailable. Please try again shortly.' });
+      return;
+    }
+    res.status(500).json({ error: error.message || 'Internal server error during registration.' });
   }
 });
 
@@ -313,7 +323,11 @@ apiRouter.post('/auth/login', async (req, res: Response) => {
     });
   } catch (error: any) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error during login.' });
+    if (error.message?.includes('Database service unavailable')) {
+      res.status(503).json({ error: 'Database service unavailable. Please try again shortly.' });
+      return;
+    }
+    res.status(500).json({ error: error.message || 'Internal server error during login.' });
   }
 });
 
@@ -1159,53 +1173,68 @@ apiRouter.delete('/applications/:id', authenticate, async (req: AuthRequest, res
 // =========================================================================
 
 apiRouter.get('/dashboard/citizen', authenticate, async (req: AuthRequest, res: Response) => {
-  const userId = req.user!.id;
-  const [myReports, myApplications, savedBookmarks, recentPolicies, allReports] = await Promise.all([
-    dbService.listReports({ userId }),
-    dbService.listApplicationsByUser(userId),
-    dbService.listBookmarksByUser(userId),
-    dbService.listPolicies({ limit: 4 } as any),
-    dbService.listReports({ limit: 10 }),
-  ]);
+  try {
+    const userId = req.user!.id;
+    const [myReports, myApplications, savedBookmarks, recentPolicies, allReports] = await Promise.all([
+      dbService.listReports({ userId }),
+      dbService.listApplicationsByUser(userId),
+      dbService.listBookmarksByUser(userId),
+      dbService.listPolicies({ limit: 4 } as any),
+      dbService.listReports({ limit: 10 }),
+    ]);
 
-  const activeReports = myReports.filter((r) => r.status !== 'Resolved' && r.status !== 'Closed');
-  const resolvedReports = myReports.filter((r) => r.status === 'Resolved' || r.status === 'Closed');
+    const activeReports = myReports.filter((r) => r.status !== 'Resolved' && r.status !== 'Closed');
+    const resolvedReports = myReports.filter((r) => r.status === 'Resolved' || r.status === 'Closed');
 
-  const nearbyReports = allReports
-    .filter((r) => r.location.toLowerCase().includes(req.user!.city.toLowerCase()) || r.userId !== userId)
-    .slice(0, 5);
+    const nearbyReports = allReports
+      .filter((r) => r.location.toLowerCase().includes(req.user!.city.toLowerCase()) || r.userId !== userId)
+      .slice(0, 5);
 
-  res.json({
-    user: {
-      id: req.user!.id,
-      name: req.user!.name,
-      email: req.user!.email,
-      role: req.user!.role,
-      city: req.user!.city,
-      state: req.user!.state,
-    },
-    metrics: {
-      activeReportsCount: activeReports.length,
-      resolvedReportsCount: resolvedReports.length,
-      savedSchemesCount: savedBookmarks.length,
-      applicationsCount: myApplications.length,
-    },
-    myRecentReports: myReports.slice(0, 4),
-    myApplications: myApplications.slice(0, 3),
-    savedBookmarks,
-    nearbyReports,
-    recentPolicyUpdates: recentPolicies.slice(0, 4),
-  });
+    res.json({
+      user: {
+        id: req.user!.id,
+        name: req.user!.name,
+        email: req.user!.email,
+        role: req.user!.role,
+        city: req.user!.city,
+        state: req.user!.state,
+      },
+      metrics: {
+        activeReportsCount: activeReports.length,
+        resolvedReportsCount: resolvedReports.length,
+        savedSchemesCount: savedBookmarks.length,
+        applicationsCount: myApplications.length,
+      },
+      myRecentReports: myReports.slice(0, 4),
+      myApplications: myApplications.slice(0, 3),
+      savedBookmarks,
+      nearbyReports,
+      recentPolicyUpdates: recentPolicies.slice(0, 4),
+    });
+  } catch (error: any) {
+    console.error('Citizen dashboard error:', error);
+    res.status(500).json({ error: error.message || 'Failed to load citizen dashboard.' });
+  }
 });
 
 apiRouter.get('/dashboard/admin', authenticate, requireRole('admin', 'officer'), async (_req: AuthRequest, res: Response) => {
-  const metrics = await dbService.getAdminMetrics();
-  res.json(metrics);
+  try {
+    const metrics = await dbService.getAdminMetrics();
+    res.json(metrics);
+  } catch (error: any) {
+    console.error('Admin dashboard error:', error);
+    res.status(500).json({ error: error.message || 'Failed to load admin dashboard.' });
+  }
 });
 
 apiRouter.get('/dashboard/transparency', async (_req, res: Response) => {
-  const metrics = await dbService.getTransparencyMetrics();
-  res.json(metrics);
+  try {
+    const metrics = await dbService.getTransparencyMetrics();
+    res.json(metrics);
+  } catch (error: any) {
+    console.error('Transparency dashboard error:', error);
+    res.status(500).json({ error: error.message || 'Failed to load transparency metrics.' });
+  }
 });
 
 // =========================================================================

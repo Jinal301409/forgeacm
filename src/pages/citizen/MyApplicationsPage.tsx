@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { PublicApplication } from '../../types';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const MyApplicationsPage: React.FC = () => {
   const { token } = useAuth();
@@ -31,10 +32,10 @@ export const MyApplicationsPage: React.FC = () => {
 
   const loadApplications = async () => {
     try {
-      const res = await fetch('/api/applications', {
+      const res = await apiFetch('/api/applications', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       setApplications(data.applications || []);
     } catch (err) {
       console.error('Failed to load applications:', err);
@@ -50,7 +51,7 @@ export const MyApplicationsPage: React.FC = () => {
     const status = progress === 100 ? 'Approved' : progress > 50 ? 'In Verification' : 'Documents Ready';
 
     try {
-      const res = await fetch(`/api/applications/${app.id}`, {
+      const res = await apiFetch(`/api/applications/${app.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -58,7 +59,7 @@ export const MyApplicationsPage: React.FC = () => {
         },
         body: JSON.stringify({ checklist: updatedChecklist, status }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       setApplications((prev) => prev.map((a) => (a.id === app.id ? data.application : a)));
     } catch (err) {
       console.error('Error toggling checklist:', err);
@@ -68,7 +69,7 @@ export const MyApplicationsPage: React.FC = () => {
   const handleDeleteApplication = async (id: string) => {
     if (!confirm('Remove this application tracker?')) return;
     try {
-      await fetch(`/api/applications/${id}`, {
+      await apiFetch(`/api/applications/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -84,7 +85,7 @@ export const MyApplicationsPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/applications', {
+      const res = await apiFetch('/api/applications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +99,7 @@ export const MyApplicationsPage: React.FC = () => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       setApplications([data.application, ...applications]);
       setShowAddModal(false);
       setServiceName('');

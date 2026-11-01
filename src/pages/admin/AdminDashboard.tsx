@@ -25,6 +25,7 @@ import {
 } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const AdminDashboard: React.FC = () => {
   const { token, user } = useAuth();
@@ -33,10 +34,10 @@ export const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     if (!token) return;
-    fetch('/api/dashboard/admin', {
+    apiFetch('/api/dashboard/admin', {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.json())
+      .then((r) => safeJson(r))
       .then((d) => {
         setData(d);
         setLoading(false);

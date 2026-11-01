@@ -1,9 +1,11 @@
 /**
  * CivicLens AI - Authentication Context
+ * Integrated with centralized apiFetch and safeJson handling.
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
+import { apiFetch, safeJson } from '../utils/api';
 
 interface AuthContextType {
   user: User | null;
@@ -32,14 +34,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const res = await fetch('/api/auth/me', {
+        const res = await apiFetch('/api/auth/me', {
           headers: {
             Authorization: `Bearer ${storedToken}`,
           },
         });
 
         if (res.ok) {
-          const data = await res.json();
+          const data = await safeJson(res);
           setUser(data.user);
           setToken(storedToken);
         } else {
@@ -60,13 +62,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) {
         throw new Error(data.error || 'Failed to sign in.');
       }
@@ -82,13 +84,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (userData: any) => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) {
         throw new Error(data.error || 'Registration failed.');
       }
@@ -109,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateProfile = async (profileData: Partial<User>) => {
     if (!token) return;
-    const res = await fetch('/api/auth/profile', {
+    const res = await apiFetch('/api/auth/profile', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -118,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify(profileData),
     });
 
-    const data = await res.json();
+    const data = await safeJson(res);
     if (!res.ok) {
       throw new Error(data.error || 'Failed to update profile.');
     }

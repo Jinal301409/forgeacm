@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { User } from '../../types';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const UserManagementPage: React.FC = () => {
   const { token, user: currentUser } = useAuth();
@@ -23,14 +24,15 @@ export const UserManagementPage: React.FC = () => {
 
   const loadUsers = async () => {
     try {
-      const url = new URL('/api/admin/users', window.location.origin);
-      if (roleFilter !== 'All') url.searchParams.set('role', roleFilter);
-      if (search) url.searchParams.set('search', search);
+      const params = new URLSearchParams();
+      if (roleFilter !== 'All') params.set('role', roleFilter);
+      if (search) params.set('search', search);
+      const queryStr = params.toString() ? `?${params.toString()}` : '';
 
-      const res = await fetch(url.toString(), {
+      const res = await apiFetch(`/api/admin/users${queryStr}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       setUsers(data.users || []);
     } catch (err) {
       console.error('Failed to load users:', err);
@@ -39,7 +41,7 @@ export const UserManagementPage: React.FC = () => {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      const res = await fetch(`/api/admin/users/${userId}/role`, {
+      const res = await apiFetch(`/api/admin/users/${userId}/role`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -47,7 +49,7 @@ export const UserManagementPage: React.FC = () => {
         },
         body: JSON.stringify({ role: newRole }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error);
 
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: newRole as any } : u)));

@@ -6,15 +6,25 @@
 
 import { GoogleGenAI, Type } from '@google/genai';
 
-const apiKey = process.env.GEMINI_API_KEY || '';
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const getGeminiModel = () => process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const GEMINI_MODEL = getGeminiModel();
 
-const ai = new GoogleGenAI({
-  apiKey: apiKey,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
+function getAI(): GoogleGenAI {
+  return new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+    httpOptions: {
+      headers: {
+        'User-Agent': 'aistudio-build',
+      },
     },
+  });
+}
+
+const ai = new Proxy({} as GoogleGenAI, {
+  get(_target, prop) {
+    const instance = getAI();
+    const val = (instance as any)[prop];
+    return typeof val === 'function' ? val.bind(instance) : val;
   },
 });
 

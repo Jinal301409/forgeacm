@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Scheme } from '../../types';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const SchemeExplorerPage: React.FC = () => {
   const { user, token } = useAuth();
@@ -63,8 +64,8 @@ export const SchemeExplorerPage: React.FC = () => {
   useEffect(() => {
     loadSchemes();
     if (token) {
-      fetch('/api/bookmarks', { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => r.json())
+      apiFetch('/api/bookmarks', { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => safeJson(r))
         .then((d) => {
           if (d.bookmarks) {
             setBookmarkedIds(d.bookmarks.map((b: any) => b.itemId));
@@ -76,13 +77,14 @@ export const SchemeExplorerPage: React.FC = () => {
 
   const loadSchemes = async () => {
     try {
-      const url = new URL('/api/schemes', window.location.origin);
-      if (selectedCategory !== 'All') url.searchParams.set('category', selectedCategory);
-      if (selectedState !== 'All') url.searchParams.set('state', selectedState);
-      if (searchQuery) url.searchParams.set('search', searchQuery);
+      const params = new URLSearchParams();
+      if (selectedCategory !== 'All') params.set('category', selectedCategory);
+      if (selectedState !== 'All') params.set('state', selectedState);
+      if (searchQuery) params.set('search', searchQuery);
+      const queryStr = params.toString() ? `?${params.toString()}` : '';
 
-      const res = await fetch(url.toString());
-      const data = await res.json();
+      const res = await apiFetch(`/api/schemes${queryStr}`);
+      const data = await safeJson(res);
       setSchemes(data.schemes || []);
       if (!activeScheme && data.schemes && data.schemes.length > 0) {
         setActiveScheme(data.schemes[0]);
@@ -103,13 +105,13 @@ export const SchemeExplorerPage: React.FC = () => {
 
     try {
       if (isBookmarked) {
-        await fetch(`/api/schemes/${scheme.id}/bookmark`, {
+        await apiFetch(`/api/schemes/${scheme.id}/bookmark`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
         });
         setBookmarkedIds((prev) => prev.filter((id) => id !== scheme.id));
       } else {
-        await fetch(`/api/schemes/${scheme.id}/bookmark`, {
+        await apiFetch(`/api/schemes/${scheme.id}/bookmark`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -126,7 +128,7 @@ export const SchemeExplorerPage: React.FC = () => {
     setIsCheckingEligibility(true);
 
     try {
-      const res = await fetch(`/api/schemes/${scheme.id}/check-eligibility`, {
+      const res = await apiFetch(`/api/schemes/${scheme.id}/check-eligibility`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +137,7 @@ export const SchemeExplorerPage: React.FC = () => {
         body: JSON.stringify(checkerProfile),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) {
         throw new Error(data.error || 'Failed to evaluate eligibility.');
       }

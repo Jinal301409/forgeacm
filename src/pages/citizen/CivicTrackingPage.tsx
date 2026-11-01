@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { CivicReport } from '../../types';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const CivicTrackingPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,14 +44,15 @@ export const CivicTrackingPage: React.FC = () => {
 
   const loadReports = async () => {
     try {
-      const url = new URL('/api/reports', window.location.origin);
-      if (statusFilter !== 'All') url.searchParams.set('status', statusFilter);
-      if (categoryFilter !== 'All') url.searchParams.set('category', categoryFilter);
+      const params = new URLSearchParams();
+      if (statusFilter !== 'All') params.set('status', statusFilter);
+      if (categoryFilter !== 'All') params.set('category', categoryFilter);
+      const queryStr = params.toString() ? `?${params.toString()}` : '';
 
-      const res = await fetch(url.toString(), {
+      const res = await apiFetch(`/api/reports${queryStr}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       setReports(data.reports || []);
 
       if (id) {
@@ -70,7 +72,7 @@ export const CivicTrackingPage: React.FC = () => {
 
     setIsSubmittingComment(true);
     try {
-      const res = await fetch(`/api/reports/${selectedReport.id}/comments`, {
+      const res = await apiFetch(`/api/reports/${selectedReport.id}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +81,7 @@ export const CivicTrackingPage: React.FC = () => {
         body: JSON.stringify({ message: newComment }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error);
 
       // Append comment locally
@@ -102,7 +104,7 @@ export const CivicTrackingPage: React.FC = () => {
 
     setIsUpdatingStatus(true);
     try {
-      const res = await fetch(`/api/reports/${selectedReport.id}/status`, {
+      const res = await apiFetch(`/api/reports/${selectedReport.id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +117,7 @@ export const CivicTrackingPage: React.FC = () => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error);
 
       setSelectedReport(data.report);

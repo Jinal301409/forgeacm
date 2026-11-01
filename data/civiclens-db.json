@@ -52,20 +52,6 @@
       "occupation": "",
       "category": "General",
       "createdAt": "2026-11-01T08:40:28.128Z"
-    },
-    {
-      "id": "usr_1793548528437_mecc5",
-      "name": "Attacker User",
-      "email": "test_1793548528352@civiclens.gov",
-      "passwordHash": "$2b$10$7k/.SS6DwJiPz9tEbq7kcuh/Hx4ZCUM9oIA8sMfvkUugsHsmwdi1C",
-      "phone": "",
-      "role": "citizen",
-      "state": "National / Other",
-      "city": "City",
-      "preferredLanguage": "English",
-      "occupation": "",
-      "category": "General",
-      "createdAt": "2026-11-01T15:55:28.437Z"
     }
   ],
   "policyDocuments": [
@@ -922,6 +908,15 @@
   ],
   "notifications": [
     {
+      "id": "notif_1793554688610_sevv",
+      "userId": "usr_1793554688609_fkp15",
+      "title": "Welcome to CivicLens AI",
+      "message": "Your civic intelligence account is active. Explore policies, report local issues, or check scheme eligibility.",
+      "type": "success",
+      "read": false,
+      "createdAt": "2026-11-01T17:38:08.610Z"
+    },
+    {
       "id": "notif_1793548528531_cm9a",
       "userId": "usr_1793548528437_mecc5",
       "title": "Security Alert: Password Changed",
@@ -1010,6 +1005,26 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "aud_1793554688878_2222u",
+      "userId": "usr_1793554688609_fkp15",
+      "userName": "Verification Citizen",
+      "action": "USER_LOGIN",
+      "entityType": "User",
+      "entityId": "usr_1793554688609_fkp15",
+      "details": "User logged in from 127.0.0.1",
+      "timestamp": "2026-11-01T17:38:08.878Z"
+    },
+    {
+      "id": "aud_1793554688610_7kxrz",
+      "userId": "usr_1793554688609_fkp15",
+      "userName": "Verification Citizen",
+      "action": "USER_REGISTERED",
+      "entityType": "User",
+      "entityId": "usr_1793554688609_fkp15",
+      "details": "New citizen registered from Mumbai, Maharashtra",
+      "timestamp": "2026-11-01T17:38:08.610Z"
+    },
     {
       "id": "aud_1793548567446_o61e4",
       "userId": "usr_citizen_01",

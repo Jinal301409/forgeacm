@@ -13,14 +13,20 @@ import {
   Lock,
 } from 'lucide-react';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const TransparencyPage: React.FC = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/dashboard/transparency')
-      .then((r) => r.json())
+    apiFetch('/api/dashboard/transparency')
+      .then(async (r) => {
+        if (!r.ok) {
+          throw new Error(`Server returned HTTP ${r.status}`);
+        }
+        return safeJson(r);
+      })
       .then((d) => {
         setData(d);
         setLoading(false);

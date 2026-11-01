@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { CivicReport, User } from '../../types';
+import { apiFetch, safeJson } from '../../utils/api';
 
 export const ComplaintManagementPage: React.FC = () => {
   const { token, user } = useAuth();
@@ -37,15 +38,16 @@ export const ComplaintManagementPage: React.FC = () => {
 
   const loadReports = async () => {
     try {
-      const url = new URL('/api/reports', window.location.origin);
-      if (statusFilter !== 'All') url.searchParams.set('status', statusFilter);
-      if (severityFilter !== 'All') url.searchParams.set('severity', severityFilter);
-      if (searchQuery) url.searchParams.set('search', searchQuery);
+      const params = new URLSearchParams();
+      if (statusFilter !== 'All') params.set('status', statusFilter);
+      if (severityFilter !== 'All') params.set('severity', severityFilter);
+      if (searchQuery) params.set('search', searchQuery);
+      const queryStr = params.toString() ? `?${params.toString()}` : '';
 
-      const res = await fetch(url.toString(), {
+      const res = await apiFetch(`/api/reports${queryStr}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       setReports(data.reports || []);
     } catch (err) {
       console.error('Failed to load complaints:', err);
@@ -54,10 +56,10 @@ export const ComplaintManagementPage: React.FC = () => {
 
   const loadOfficers = async () => {
     try {
-      const res = await fetch('/api/admin/users?role=officer', {
+      const res = await apiFetch('/api/admin/users?role=officer', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       setOfficers(data.users || []);
     } catch (err) {
       console.error('Failed to load officers:', err);
@@ -68,7 +70,7 @@ export const ComplaintManagementPage: React.FC = () => {
     if (!selectedReport || !selectedOfficerId) return;
     setIsUpdating(true);
     try {
-      const res = await fetch(`/api/reports/${selectedReport.id}/assign`, {
+      const res = await apiFetch(`/api/reports/${selectedReport.id}/assign`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +78,7 @@ export const ComplaintManagementPage: React.FC = () => {
         },
         body: JSON.stringify({ officerId: selectedOfficerId }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error);
 
       setReports((prev) => prev.map((r) => (r.id === data.report.id ? data.report : r)));
@@ -93,7 +95,7 @@ export const ComplaintManagementPage: React.FC = () => {
     if (!selectedReport || !newStatus) return;
     setIsUpdating(true);
     try {
-      const res = await fetch(`/api/reports/${selectedReport.id}/status`, {
+      const res = await apiFetch(`/api/reports/${selectedReport.id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -105,7 +107,7 @@ export const ComplaintManagementPage: React.FC = () => {
           resolutionNotes: newStatus === 'Resolved' ? resolutionNotes : undefined,
         }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error);
 
       setReports((prev) => prev.map((r) => (r.id === data.report.id ? data.report : r)));

@@ -22,23 +22,39 @@ async function startServer() {
   const PORT = process.env.PORT || 3000;
   const isProd = process.env.NODE_ENV === 'production';
 
-  // Security headers middleware
+  // Security headers middleware (permit embedding in AI Studio workspace preview)
   app.use((_req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     next();
   });
 
-  // CORS Configuration
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map((s) => s.trim()) || ['*'];
+  // CORS Configuration - Explicitly allows frontend at https://forgeacm-cwy4.vercel.app
+  const defaultOrigins = [
+    'https://forgeacm-cwy4.vercel.app',
+    'https://civiclens-ai-77ex.onrender.com',
+    'http://localhost:3000',
+    'http://localhost:5173',
+  ];
+  const configuredOrigins = process.env.ALLOWED_ORIGINS?.split(',').map((s) => s.trim()).filter(Boolean) || [];
+  const allowedOrigins = [...new Set([...defaultOrigins, ...configuredOrigins])];
+
   app.use(
     cors({
-      origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+        if (/^https:\/\/forgeacm.*\.vercel\.app$/.test(origin)) {
+          return callback(null, true);
+        }
+        return callback(new Error(`CORS origin ${origin} not allowed by policy`));
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     })
   );
 
@@ -52,14 +68,19 @@ async function startServer() {
   }
   app.use('/uploads', express.static(uploadsDir));
 
-  // Initialize local fallback database cache
+  // Initialize local database cache (for non-production local development only)
   loadDatabase();
 
-  // Connect to MongoDB Atlas
+  // Connect to MongoDB Atlas (required in production)
   await connectToMongoDB();
 
   // Mount API endpoints
   app.use('/api', apiRouter);
+
+  // Return JSON 404 for any unmatched /api/* routes, preventing HTML fallback
+  app.all('/api/*', (_req, res) => {
+    res.status(404).json({ error: 'API endpoint not found' });
+  });
 
   // Vite integration
   if (!isProd) {
@@ -72,6 +93,16 @@ async function startServer() {
       appType: 'spa',
     });
     app.use(vite.middlewares);
+    app.use('*', async (req, res, next) => {
+      const url = req.originalUrl;
+      try {
+        let template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+      } catch (e) {
+        next(e);
+      }
+    });
   } else {
     const distDir = path.resolve(__dirname, 'dist');
     app.use(express.static(distDir));
@@ -102,6 +133,14 @@ async function startServer() {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
 }
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[Server Process] Unhandled Rejection:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[Server Process] Uncaught Exception:', err);
+});
 
 startServer().catch((err) => {
   console.error('Fatal startup error:', err);
