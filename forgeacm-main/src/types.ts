@@ -169,6 +169,28 @@ export interface FactCheck {
   }[];
   syntheticMediaNotice: string;
   verifiedTimestamp: string;
+  mediaSha256?: string;
+  mediaForensics?: {
+    assessed: boolean;
+    syntheticLikelihood: 'Low' | 'Medium' | 'High' | 'Not assessed';
+    indicators: string[];
+    notes: string;
+  };
+  registryMatches?: {
+    id: string;
+    type: 'Scheme' | 'Policy' | 'Prior fact-check';
+    title: string;
+    authority?: string;
+    score: number;
+  }[];
+  relatedChecks?: {
+    id: string;
+    claim: string;
+    verdict: string;
+    similarity: number;
+    reason: 'identical-media' | 'similar-claim';
+    verifiedTimestamp: string;
+  }[];
 }
 
 export interface PublicApplication {

@@ -7,9 +7,11 @@ import {
   ExternalLink,
   Sparkles,
   ShieldCheck,
-  Clock,
   ArrowRight,
   Info,
+  Layers,
+  History,
+  FileSearch,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
@@ -67,9 +69,7 @@ export const FactVerificationPage: React.FC = () => {
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to verify claim.');
-      }
+      if (!res.ok) throw new Error(data.error || 'Failed to verify claim.');
 
       setCurrentResult(data.factCheck);
       setHistory([data.factCheck, ...history]);
@@ -90,13 +90,13 @@ export const FactVerificationPage: React.FC = () => {
       <div className="pb-4 border-b border-white/[0.08]">
         <div className="inline-flex items-center gap-2 text-xs font-mono font-semibold text-[#8968FF]">
           <CheckCircle className="w-3.5 h-3.5" />
-          <span>OBJECTIVE MISINFORMATION AUDIT</span>
+          <span>OBJECTIVE MISINFORMATION AUDIT & REGISTRY GROUNDING</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
           Civic Claim & Policy Verification Engine
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Verify viral WhatsApp claims, policy announcements, and rumors against authorized government gazettes and PIB reports.
+          Verify viral WhatsApp claims, policy announcements, and rumors against authorized government gazettes, PIB reports, and verified schemes.
         </p>
       </div>
 
@@ -107,9 +107,9 @@ export const FactVerificationPage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Grid: Input Form (5 cols) & Verification Result (7 cols) */}
+      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Verification Form */}
+        {/* Left Column: Form */}
         <div className="lg:col-span-5 glass-panel p-6 sm:p-8 rounded-3xl border border-white/[0.1] space-y-5">
           <h2 className="text-sm font-bold text-white uppercase font-mono tracking-wider flex items-center gap-2">
             <Search className="w-4 h-4 text-[#38D9E6]" />
@@ -147,7 +147,7 @@ export const FactVerificationPage: React.FC = () => {
             {/* Screenshot upload */}
             <div className="space-y-2">
               <label className="text-xs font-medium text-slate-300">
-                Attach Screenshot Evidence (Optional)
+                Attach Screenshot Evidence (Enables Visual Forensics)
               </label>
               {imagePreview ? (
                 <div className="relative aspect-video rounded-xl overflow-hidden bg-[#080B12] border border-white/[0.1]">
@@ -180,7 +180,7 @@ export const FactVerificationPage: React.FC = () => {
               {isAnalyzing ? (
                 <span className="flex items-center gap-2">
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Cross-referencing Gazette Repositories...
+                  Cross-referencing Verified Registry...
                 </span>
               ) : (
                 <span>Execute Fact Verification</span>
@@ -189,7 +189,7 @@ export const FactVerificationPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick example prompt selector */}
+          {/* Quick example prompts */}
           <div className="pt-3 border-t border-white/[0.08] space-y-2 text-xs">
             <span className="text-slate-400 font-mono text-[11px] block">Test Popular Civic Claims:</span>
             <div className="space-y-1.5">
@@ -211,9 +211,8 @@ export const FactVerificationPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Latest Analysis & Historical Record */}
+        {/* Right Column: Latest Analysis */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Active Result Card */}
           {currentResult ? (
             <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/[0.1] space-y-6 animate-in fade-in">
               <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-white/[0.08]">
@@ -226,16 +225,88 @@ export const FactVerificationPage: React.FC = () => {
                 <StatusBadge status={currentResult.verdict} type="verdict" size="md" />
               </div>
 
-              {/* Confidence Meter */}
-              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs">
+              {/* Confidence & Provenance fingerprint */}
+              <div className="grid grid-cols-2 gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-xs">
                 <div>
                   <span className="text-slate-400 block font-mono">Verification Confidence</span>
                   <span className="text-xl font-bold font-mono text-emerald-400">{currentResult.confidence}%</span>
                 </div>
                 <div className="text-right text-[11px] text-slate-400 font-mono">
-                  Timestamp: {new Date(currentResult.verifiedTimestamp).toLocaleString()}
+                  <span>Timestamp: {new Date(currentResult.verifiedTimestamp).toLocaleString()}</span>
+                  {currentResult.mediaSha256 && (
+                    <div className="text-[10px] text-slate-500 truncate mt-1" title={currentResult.mediaSha256}>
+                      SHA-256: {currentResult.mediaSha256.slice(0, 16)}...
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Media Forensics (if assessed) */}
+              {currentResult.mediaForensics?.assessed && (
+                <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/25 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-[#8968FF] uppercase font-mono tracking-wider flex items-center gap-1.5">
+                      <FileSearch className="w-4 h-4" /> AI Visual Forensics Screening
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full font-mono text-[11px] font-bold ${currentResult.mediaForensics.syntheticLikelihood === 'High'
+                        ? 'bg-rose-500/20 text-rose-300'
+                        : currentResult.mediaForensics.syntheticLikelihood === 'Medium'
+                          ? 'bg-amber-500/20 text-amber-300'
+                          : 'bg-emerald-500/20 text-emerald-300'
+                      }`}>
+                      Synthetic Likelihood: {currentResult.mediaForensics.syntheticLikelihood}
+                    </span>
+                  </div>
+                  {currentResult.mediaForensics.notes && (
+                    <p className="text-slate-300">{currentResult.mediaForensics.notes}</p>
+                  )}
+                  {currentResult.mediaForensics.indicators && currentResult.mediaForensics.indicators.length > 0 && (
+                    <ul className="list-disc list-inside text-slate-400 space-y-1">
+                      {currentResult.mediaForensics.indicators.map((ind, i) => (
+                        <li key={i}>{ind}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              {/* Provenance: Related prior checks */}
+              {currentResult.relatedChecks && currentResult.relatedChecks.length > 0 && (
+                <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-2 text-xs">
+                  <span className="font-bold text-amber-300 uppercase font-mono tracking-wider flex items-center gap-1.5">
+                    <History className="w-4 h-4" /> Provenance of Misinformation
+                  </span>
+                  <p className="text-slate-400">Earlier evaluations of this claim or media were detected:</p>
+                  <div className="space-y-1.5">
+                    {currentResult.relatedChecks.map((rc) => (
+                      <div key={rc.id} className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05] flex items-center justify-between">
+                        <span className="text-slate-300 font-semibold truncate max-w-sm">{rc.claim}</span>
+                        <span className="font-mono text-[10px] text-[#38D9E6]">{rc.reason === 'identical-media' ? 'Exact image match' : `${Math.round(rc.similarity * 100)}% text overlap`}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Verified Registry Matches */}
+              {currentResult.registryMatches && currentResult.registryMatches.length > 0 && (
+                <div className="space-y-2 text-xs">
+                  <span className="font-bold text-[#38D9E6] uppercase font-mono tracking-wider flex items-center gap-1.5">
+                    <Layers className="w-4 h-4" /> Cross-Referenced Verified Registry Matches
+                  </span>
+                  <div className="space-y-1.5">
+                    {currentResult.registryMatches.map((m) => (
+                      <div key={m.id} className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-white">{m.title}</p>
+                          <p className="text-[11px] text-slate-400">{m.type} • {m.authority || 'Government'}</p>
+                        </div>
+                        <span className="text-xs font-mono text-emerald-400 font-bold">{Math.round(m.score * 100)}% Match</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Detailed Neutral Analysis */}
               <div className="space-y-2 text-xs leading-relaxed">
@@ -273,7 +344,7 @@ export const FactVerificationPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Official Sources References */}
+              {/* Official Sources */}
               {currentResult.officialSources && currentResult.officialSources.length > 0 && (
                 <div className="space-y-2 text-xs pt-3 border-t border-white/[0.06]">
                   <span className="font-bold text-white uppercase font-mono tracking-wider">
@@ -312,7 +383,7 @@ export const FactVerificationPage: React.FC = () => {
             </div>
           )}
 
-          {/* Historical Verified Claims Feed */}
+          {/* Historical Feed */}
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-white uppercase font-mono tracking-wider">
               Previously Verified Public Claims ({history.length})

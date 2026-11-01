@@ -541,3 +541,64 @@ Return strict JSON with fields:
     };
   }
 }
+
+/**
+ * Document text extraction (OCR) for scanned PDFs and photos of notifications.
+ * Works for English and regional Indian languages.
+ */
+export async function extractTextWithGemini(buffer: Buffer, mimeType: string): Promise<string> {
+  if (!isGeminiConfigured()) {
+    throw new Error('GEMINI_API_KEY is not configured, so scanned documents cannot be read. Paste the text instead.');
+  }
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: {
+      parts: [
+        { inlineData: { mimeType, data: buffer.toString('base64') } },
+        {
+          text: 'Extract ALL readable text from this government document exactly as written. Keep headings, numbering, clauses and table rows as plain text. Do NOT summarise, translate or add commentary. Return only the extracted text.',
+        },
+      ],
+    },
+  });
+
+  return (response.text || '').trim();
+}
+
+/**
+ * Text-to-speech helper for regional-language voice explainers.
+ */
+export async function synthesizeSpeechWithGemini(text: string): Promise<Buffer> {
+  if (!isGeminiConfigured()) {
+    throw new Error('GEMINI_API_KEY is not configured.');
+  }
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash-preview-tts',
+    contents: [{ role: 'user', parts: [{ text }] }],
+    config: {
+      responseModalities: ['AUDIO'],
+      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } },
+    },
+  });
+  const part: any = response.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData?.data);
+  if (!part) throw new Error('Voice model returned no audio.');
+  const pcm = Buffer.from(part.inlineData.data, 'base64');
+
+  // Pack into standard WAV container
+  const header = Buffer.alloc(44);
+  header.write('RIFF', 0);
+  header.writeUInt32LE(36 + pcm.length, 4);
+  header.write('WAVE', 8);
+  header.write('fmt ', 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(1, 22);
+  header.writeUInt32LE(24000, 24);
+  header.writeUInt32LE(48000, 28);
+  header.writeUInt16LE(2, 32);
+  header.writeUInt16LE(16, 34);
+  header.write('data', 36);
+  header.writeUInt32LE(pcm.length, 40);
+  return Buffer.concat([header, pcm]);
+}

@@ -70,7 +70,7 @@ export const SchemeExplorerPage: React.FC = () => {
             setBookmarkedIds(d.bookmarks.map((b: any) => b.itemId));
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [selectedCategory, selectedState, token]);
 
@@ -198,11 +198,10 @@ export const SchemeExplorerPage: React.FC = () => {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-full font-medium whitespace-nowrap transition-all ${
-                selectedCategory === cat
+              className={`px-3.5 py-1.5 rounded-full font-medium whitespace-nowrap transition-all ${selectedCategory === cat
                   ? 'bg-[#477BFF] text-white shadow-sm'
                   : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border border-white/[0.08]'
-              }`}
+                }`}
             >
               {cat}
             </button>
@@ -239,11 +238,10 @@ export const SchemeExplorerPage: React.FC = () => {
               <div
                 key={scheme.id}
                 onClick={() => setActiveScheme(scheme)}
-                className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-3 ${
-                  isSelected
+                className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-3 ${isSelected
                     ? 'bg-gradient-to-r from-[#477BFF]/20 to-[#8968FF]/10 border-[#477BFF]/40 shadow-lg shadow-[#477BFF]/10'
                     : 'glass-card border-white/[0.06] hover:border-white/[0.15]'
-                }`}
+                  }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-1">
@@ -496,7 +494,7 @@ export const SchemeExplorerPage: React.FC = () => {
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 to-transparent border border-emerald-500/30 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider block">
-                      AI Verdict
+                      Evaluation Result
                     </span>
                     <span className="text-base font-bold text-white">
                       {eligibilityResult.isEligible}
@@ -509,6 +507,26 @@ export const SchemeExplorerPage: React.FC = () => {
                     <span className="text-[10px] text-slate-400 block">Match Score</span>
                   </div>
                 </div>
+
+                {/* Rule-by-rule Breakdown */}
+                {eligibilityResult.checks && eligibilityResult.checks.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="font-semibold text-white font-mono">Rule Criteria Breakdown:</span>
+                    <div className="space-y-1.5">
+                      {eligibilityResult.checks.map((chk: any, i: number) => (
+                        <div key={i} className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-start gap-2">
+                          <span className={`font-bold font-mono ${chk.status === 'pass' ? 'text-emerald-400' : chk.status === 'fail' ? 'text-rose-400' : 'text-amber-400'}`}>
+                            {chk.status === 'pass' ? '✓' : chk.status === 'fail' ? '✗' : '?'}
+                          </span>
+                          <div className="flex-1">
+                            <span className="font-semibold text-white mr-1.5">{chk.label}:</span>
+                            <span className="text-slate-300">{chk.detail}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Explanations */}
                 <div className="space-y-2">
