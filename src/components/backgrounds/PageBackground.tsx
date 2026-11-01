@@ -39,22 +39,22 @@ interface EffectConfig {
 /** Decide which effect belongs to which page. */
 function pickEffect(path: string): EffectConfig | null {
   if (path === '/') return null; // the landing page has its own hero background
-  if (path.startsWith('/admin')) return { name: 'thin', dim: 0.55, glow: '#477BFF' };
-  if (path.startsWith('/dashboard')) return { name: 'ribbon', dim: 0.5, glow: '#6B2BF5' };
-  if (path.startsWith('/policies')) return { name: 'curtain', dim: 0.62, glow: '#477BFF' };
-  if (path.startsWith('/schemes')) return { name: 'orrery', dim: 0.62, glow: '#38D9E6' };
-  if (path.startsWith('/reports') || path.startsWith('/tracking')) return { name: 'lumen', dim: 0.62, glow: '#F59E0B' };
-  if (path.startsWith('/map')) return { name: 'arc', dim: 0.5, glow: '#10B981' };
-  if (path.startsWith('/fact-check')) return { name: 'vortex', dim: 0.5, glow: '#8968FF' };
-  if (path.startsWith('/applications') || path.startsWith('/notifications')) return { name: 'thin', dim: 0.58, glow: '#38D9E6' };
-  if (path.startsWith('/profile') || path.startsWith('/settings')) return { name: 'copper', dim: 0.6, glow: '#F59E0B' };
-  if (path.startsWith('/how-it-works')) return { name: 'thin', dim: 0.4, glow: '#38D9E6' };
-  if (path.startsWith('/transparency')) return { name: 'arc', dim: 0.4, glow: '#10B981' };
+  if (path.startsWith('/admin')) return { name: 'thin', dim: 0.38, glow: '#477BFF' };
+  if (path.startsWith('/dashboard')) return { name: 'ribbon', dim: 0.36, glow: '#6B2BF5' };
+  if (path.startsWith('/policies')) return { name: 'curtain', dim: 0.40, glow: '#477BFF' };
+  if (path.startsWith('/schemes')) return { name: 'orrery', dim: 0.40, glow: '#38D9E6' };
+  if (path.startsWith('/reports') || path.startsWith('/tracking')) return { name: 'lumen', dim: 0.40, glow: '#F59E0B' };
+  if (path.startsWith('/map')) return { name: 'arc', dim: 0.35, glow: '#10B981' };
+  if (path.startsWith('/fact-check')) return { name: 'vortex', dim: 0.35, glow: '#8968FF' };
+  if (path.startsWith('/applications') || path.startsWith('/notifications')) return { name: 'thin', dim: 0.38, glow: '#38D9E6' };
+  if (path.startsWith('/profile') || path.startsWith('/settings')) return { name: 'copper', dim: 0.42, glow: '#F59E0B' };
+  if (path.startsWith('/how-it-works')) return { name: 'thin', dim: 0.30, glow: '#38D9E6' };
+  if (path.startsWith('/transparency')) return { name: 'arc', dim: 0.30, glow: '#10B981' };
   if (path.startsWith('/login') || path.startsWith('/register') || path.startsWith('/forgot-password')) {
-    return { name: 'vortex', dim: 0.4, glow: '#477BFF' };
+    return { name: 'vortex', dim: 0.28, glow: '#477BFF' };
   }
   // features, about, privacy, terms and anything else
-  return { name: 'curtain', dim: 0.4, glow: '#477BFF' };
+  return { name: 'curtain', dim: 0.32, glow: '#477BFF' };
 }
 
 /** Layouts call this to know whether a background is active (so they can make themselves see-through). */
@@ -68,15 +68,12 @@ function useCalmMode(): boolean {
   const [calm, setCalm] = useState(false);
   useEffect(() => {
     const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    const small = window.matchMedia?.('(max-width: 767px)');
     const conn = (navigator as unknown as { connection?: { saveData?: boolean } }).connection;
-    const update = () => setCalm(Boolean(motion?.matches) || Boolean(small?.matches) || Boolean(conn?.saveData));
+    const update = () => setCalm(Boolean(motion?.matches) || Boolean(conn?.saveData));
     update();
     motion?.addEventListener?.('change', update);
-    small?.addEventListener?.('change', update);
     return () => {
       motion?.removeEventListener?.('change', update);
-      small?.removeEventListener?.('change', update);
     };
   }, []);
   return calm;
@@ -135,7 +132,7 @@ export const PageBackground: React.FC = () => {
     <div
       aria-hidden="true"
       className="live-bg-layer"
-      style={{ position: 'fixed', inset: 0, zIndex: -1, overflow: 'hidden', background: '#000', pointerEvents: 'none' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}
     >
       {/* Calm fallback glow (always present underneath, costs almost nothing) */}
       <div
@@ -159,7 +156,7 @@ export const PageBackground: React.FC = () => {
         style={{
           position: 'absolute',
           inset: 0,
-          background: `radial-gradient(ellipse at center, rgba(0,0,0,${effect.dim * 0.55}) 0%, rgba(0,0,0,${effect.dim}) 62%, rgba(0,0,0,${Math.min(effect.dim + 0.25, 0.92)}) 100%)`,
+          background: `radial-gradient(ellipse at center, rgba(0,0,0,${effect.dim * 0.35}) 0%, rgba(0,0,0,${effect.dim * 0.75}) 62%, rgba(0,0,0,${Math.min(effect.dim + 0.25, 0.88)}) 100%)`,
         }}
       />
     </div>

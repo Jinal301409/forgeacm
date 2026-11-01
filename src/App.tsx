@@ -45,14 +45,19 @@ import { UserManagementPage } from './pages/admin/UserManagementPage';
 import { PolicyManagementPage } from './pages/admin/PolicyManagementPage';
 import { AnalyticsPage } from './pages/admin/AnalyticsPage';
 import { AuditLogsPage } from './pages/admin/AuditLogsPage';
+import { PageBackground, usePageEffect } from './components/backgrounds/PageBackground';
 
 // Public Layout Wrapper
 function PublicLayout({ children }: { children: React.ReactNode }) {
+  const effect = usePageEffect();
   return (
-    <div className="min-h-screen flex flex-col app-bg app-text transition-colors duration-200">
-      <Navbar />
-      <main className="flex-1">{children}</main>
-      <Footer />
+    <div className={`min-h-screen flex flex-col app-text transition-colors duration-200 relative ${effect ? 'live-bg-on' : 'app-bg'}`}>
+      <PageBackground />
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 bg-transparent">{children}</main>
+        <Footer />
+      </div>
     </div>
   );
 }

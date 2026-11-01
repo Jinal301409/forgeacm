@@ -59,7 +59,7 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pt-20 flex items-center justify-center relative overflow-hidden auth-canvas bg-[#04060A] px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pt-20 flex items-center justify-center relative overflow-hidden auth-canvas bg-transparent px-4 sm:px-6 lg:px-8">
       {/* Background ambient glowing gradients */}
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#477BFF]/10 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-[#8968FF]/10 blur-[120px] rounded-full pointer-events-none" />

@@ -83,7 +83,7 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-16 flex items-center justify-center relative overflow-hidden bg-[#0B1020] px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pt-24 pb-16 flex items-center justify-center relative overflow-hidden auth-canvas bg-transparent px-4 sm:px-6 lg:px-8">
       {/* Background glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-[#477BFF]/10 blur-[150px] rounded-full pointer-events-none" />
 

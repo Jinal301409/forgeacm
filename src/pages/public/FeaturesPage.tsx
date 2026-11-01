@@ -77,7 +77,7 @@ export const FeaturesPage: React.FC = () => {
   ];
 
   return (
-    <div className="relative overflow-hidden app-bg app-text" style={{ paddingTop: 'clamp(96px,12vh,128px)' }}>
+    <div className="relative overflow-hidden bg-transparent app-text" style={{ paddingTop: 'clamp(96px,12vh,128px)' }}>
       <div className="orb-cyan" style={{ opacity: 0.5 }} />
       <div className="orb-blue" style={{ opacity: 0.4 }} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 space-y-16 relative z-10">

@@ -66,7 +66,7 @@ export const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-16 flex items-center justify-center relative overflow-hidden auth-canvas bg-[#04060A] px-4">
+    <div className="min-h-screen pt-24 pb-16 flex items-center justify-center relative overflow-hidden auth-canvas bg-transparent px-4">
       <div className="w-full max-w-md rounded-3xl bg-[#080B12]/90 border border-white/[0.1] shadow-2xl backdrop-blur-2xl p-8 space-y-6">
         <div className="text-center space-y-2">
           <Link to="/" className="inline-flex items-center gap-2 group mb-2">
