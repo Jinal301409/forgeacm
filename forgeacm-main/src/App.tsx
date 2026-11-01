@@ -10,6 +10,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { DashboardLayout } from './components/layout/DashboardLayout';
+import { PageBackground, usePageEffect } from './components/backgrounds/PageBackground';
 
 // Public Pages
 import { LandingPage } from './pages/public/LandingPage';
@@ -48,8 +49,10 @@ import { AuditLogsPage } from './pages/admin/AuditLogsPage';
 
 // Public Layout Wrapper
 function PublicLayout({ children }: { children: React.ReactNode }) {
+  const effect = usePageEffect();
   return (
-    <div className="min-h-screen flex flex-col app-bg app-text transition-colors duration-200">
+    <div className={`min-h-screen flex flex-col app-bg app-text transition-colors duration-200 ${effect ? 'live-bg-on' : ''}`}>
+      <PageBackground />
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />

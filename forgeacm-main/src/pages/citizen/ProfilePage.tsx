@@ -108,7 +108,7 @@ export const ProfilePage: React.FC = () => {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
+              className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
             />
           </div>
 
@@ -118,7 +118,7 @@ export const ProfilePage: React.FC = () => {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
+              className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
             />
           </div>
 
@@ -128,7 +128,7 @@ export const ProfilePage: React.FC = () => {
               type="text"
               value={state}
               onChange={(e) => setState(e.target.value)}
-              className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
+              className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
             />
           </div>
 
@@ -138,7 +138,7 @@ export const ProfilePage: React.FC = () => {
               type="text"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
+              className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
             />
           </div>
 
@@ -147,7 +147,7 @@ export const ProfilePage: React.FC = () => {
             <select
               value={preferredLanguage}
               onChange={(e) => setPreferredLanguage(e.target.value)}
-              className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
+              className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
             >
               {LANGUAGES.map((l) => (
                 <option key={l.code} value={l.name}>
@@ -163,7 +163,7 @@ export const ProfilePage: React.FC = () => {
               type="text"
               value={occupation}
               onChange={(e) => setOccupation(e.target.value)}
-              className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
+              className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
             />
           </div>
 
@@ -173,7 +173,7 @@ export const ProfilePage: React.FC = () => {
               type="number"
               value={annualIncome}
               onChange={(e) => setAnnualIncome(Number(e.target.value))}
-              className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
+              className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
             />
           </div>
 
@@ -182,7 +182,7 @@ export const ProfilePage: React.FC = () => {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
+              className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white"
             >
               <option value="General">General</option>
               <option value="OBC">OBC</option>

@@ -123,7 +123,7 @@ export const UserManagementPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name, email, or city..."
-            className="bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
+            className="bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
           />
           <button type="submit" className="px-4 py-2 rounded-xl bg-[#477BFF] text-white text-xs font-semibold">
             Search
@@ -176,7 +176,7 @@ export const UserManagementPage: React.FC = () => {
                       value={u.role}
                       onChange={(e) => handleRoleChange(u.id, e.target.value)}
                       disabled={currentUser?.id === u.id}
-                      className="bg-[#11182B] border border-white/[0.1] rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none cursor-pointer disabled:opacity-40"
+                      className="bg-[#080B12] border border-white/[0.1] rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none cursor-pointer disabled:opacity-40"
                     >
                       <option value="citizen">Citizen</option>
                       <option value="officer">Civic Officer</option>

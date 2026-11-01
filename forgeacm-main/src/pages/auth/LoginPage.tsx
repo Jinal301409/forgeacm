@@ -59,18 +59,18 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pt-20 flex items-center justify-center relative overflow-hidden bg-[#0B1020] px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pt-20 flex items-center justify-center relative overflow-hidden auth-canvas bg-[#04060A] px-4 sm:px-6 lg:px-8">
       {/* Background ambient glowing gradients */}
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#477BFF]/10 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-[#8968FF]/10 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="w-full max-w-5xl my-10 grid grid-cols-1 lg:grid-cols-12 rounded-3xl bg-[#0F172A]/80 border border-white/[0.1] shadow-2xl backdrop-blur-2xl overflow-hidden relative z-10">
+      <div className="w-full max-w-5xl my-10 grid grid-cols-1 lg:grid-cols-12 rounded-3xl bg-[#080B12]/80 border border-white/[0.1] shadow-2xl backdrop-blur-2xl overflow-hidden relative z-10">
         {/* Left Side: Brand & Visual Hero */}
-        <div className="lg:col-span-5 p-8 sm:p-12 bg-gradient-to-br from-[#11182B] via-[#0E1528] to-[#141C33] border-b lg:border-b-0 lg:border-r border-white/[0.08] flex flex-col justify-between space-y-8">
+        <div className="lg:col-span-5 p-8 sm:p-12 bg-gradient-to-br from-[#080B12] via-[#0E1528] to-[#141C33] border-b lg:border-b-0 lg:border-r border-white/[0.08] flex flex-col justify-between space-y-8">
           <div className="space-y-6">
             <Link to="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#477BFF] via-[#8968FF] to-[#38D9E6] p-[1.5px] shadow-lg shadow-[#477BFF]/30">
-                <div className="w-full h-full bg-[#0B1020] rounded-[10px] flex items-center justify-center">
+                <div className="w-full h-full bg-[#04060A] rounded-[10px] flex items-center justify-center">
                   <ShieldCheck className="w-5 h-5 text-[#38D9E6]" />
                 </div>
               </div>
@@ -160,7 +160,7 @@ export const LoginPage: React.FC = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
                     required
-                    className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#477BFF] focus:ring-1 focus:ring-[#477BFF] transition-all"
+                    className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#477BFF] focus:ring-1 focus:ring-[#477BFF] transition-all"
                   />
                 </div>
               </div>
@@ -180,7 +180,7 @@ export const LoginPage: React.FC = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
                     required
-                    className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#477BFF] focus:ring-1 focus:ring-[#477BFF] transition-all"
+                    className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#477BFF] focus:ring-1 focus:ring-[#477BFF] transition-all"
                   />
                   <button
                     type="button"
@@ -198,7 +198,7 @@ export const LoginPage: React.FC = () => {
                   id="remember"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded bg-[#11182B] border-white/[0.2] text-[#477BFF] focus:ring-0 w-4 h-4"
+                  className="rounded bg-[#080B12] border-white/[0.2] text-[#477BFF] focus:ring-0 w-4 h-4"
                 />
                 <label htmlFor="remember" className="ml-2 text-xs text-slate-400 cursor-pointer">
                   Remember this device for 30 days

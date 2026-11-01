@@ -201,7 +201,7 @@ export const CivicMapPage: React.FC = () => {
             });
             userMarkerRef.current = L.marker([lat, lng], { icon: userIcon })
               .addTo(mapInstanceRef.current)
-              .bindPopup('<b style="color: #0B1020;">Your Current GPS Location</b>');
+              .bindPopup('<b style="color: #04060A;">Your Current GPS Location</b>');
           }
         }
       },
@@ -405,7 +405,7 @@ export const CivicMapPage: React.FC = () => {
               className="bg-transparent app-text focus:outline-none cursor-pointer font-medium"
             >
               {categories.map((c) => (
-                <option key={c} value={c} className="bg-slate-900 text-white dark:bg-[#11182B]">
+                <option key={c} value={c} className="bg-slate-900 text-white dark:bg-[#080B12]">
                   {c}
                 </option>
               ))}
@@ -421,7 +421,7 @@ export const CivicMapPage: React.FC = () => {
               className="bg-transparent app-text focus:outline-none cursor-pointer font-medium"
             >
               {severities.map((s) => (
-                <option key={s} value={s} className="bg-slate-900 text-white dark:bg-[#11182B]">
+                <option key={s} value={s} className="bg-slate-900 text-white dark:bg-[#080B12]">
                   {s}
                 </option>
               ))}
@@ -437,7 +437,7 @@ export const CivicMapPage: React.FC = () => {
               className="bg-transparent app-text focus:outline-none cursor-pointer font-medium"
             >
               {statuses.map((st) => (
-                <option key={st} value={st} className="bg-slate-900 text-white dark:bg-[#11182B]">
+                <option key={st} value={st} className="bg-slate-900 text-white dark:bg-[#080B12]">
                   {st}
                 </option>
               ))}

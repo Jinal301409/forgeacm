@@ -193,7 +193,7 @@ export const MyApplicationsPage: React.FC = () => {
                         type="checkbox"
                         checked={item.completed}
                         onChange={() => toggleChecklistItem(app, item.id)}
-                        className="rounded bg-[#11182B] border-white/[0.2] text-[#477BFF] w-4 h-4"
+                        className="rounded bg-[#080B12] border-white/[0.2] text-[#477BFF] w-4 h-4"
                       />
                       <span className={item.completed ? 'line-through text-slate-500' : 'text-slate-200'}>
                         {item.item}
@@ -239,7 +239,7 @@ export const MyApplicationsPage: React.FC = () => {
       {/* Add Application Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-[#0F172A] border border-white/[0.1] rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl">
+          <div className="w-full max-w-lg bg-[#080B12] border border-white/[0.1] rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
               <h3 className="text-base font-bold text-white">Track New Public Service</h3>
               <button
@@ -259,7 +259,7 @@ export const MyApplicationsPage: React.FC = () => {
                   value={serviceName}
                   onChange={(e) => setServiceName(e.target.value)}
                   placeholder="e.g. PM Surya Ghar Solar Subsidy Application"
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
                 />
               </div>
 
@@ -270,7 +270,7 @@ export const MyApplicationsPage: React.FC = () => {
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                   placeholder="e.g. Torrent Power & GEDA"
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
                 />
               </div>
 
@@ -281,7 +281,7 @@ export const MyApplicationsPage: React.FC = () => {
                   value={referenceNumber}
                   onChange={(e) => setReferenceNumber(e.target.value)}
                   placeholder="e.g. RTS-2025-99418"
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
                 />
               </div>
 
@@ -292,7 +292,7 @@ export const MyApplicationsPage: React.FC = () => {
                   value={officialPortalUrl}
                   onChange={(e) => setOfficialPortalUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
                 />
               </div>
 

@@ -102,7 +102,7 @@ export const AnalyticsPage: React.FC = () => {
               <XAxis dataKey="day" stroke="#64748B" fontSize={11} />
               <YAxis stroke="#64748B" fontSize={11} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#11182B', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }}
+                contentStyle={{ backgroundColor: '#080B12', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }}
               />
               <Line type="monotone" dataKey="received" stroke="#F97316" strokeWidth={2} name="Received" />
               <Line type="monotone" dataKey="resolved" stroke="#10B981" strokeWidth={2} name="Resolved" />

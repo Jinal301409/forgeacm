@@ -38,12 +38,12 @@ export const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-16 flex items-center justify-center relative overflow-hidden bg-[#0B1020] px-4">
-      <div className="w-full max-w-md rounded-3xl bg-[#0F172A]/90 border border-white/[0.1] shadow-2xl backdrop-blur-2xl p-8 space-y-6">
+    <div className="min-h-screen pt-24 pb-16 flex items-center justify-center relative overflow-hidden auth-canvas bg-[#04060A] px-4">
+      <div className="w-full max-w-md rounded-3xl bg-[#080B12]/90 border border-white/[0.1] shadow-2xl backdrop-blur-2xl p-8 space-y-6">
         <div className="text-center space-y-2">
           <Link to="/" className="inline-flex items-center gap-2 group mb-2">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#477BFF] to-[#38D9E6] p-[1.5px]">
-              <div className="w-full h-full bg-[#0B1020] rounded-[10px] flex items-center justify-center">
+              <div className="w-full h-full bg-[#04060A] rounded-[10px] flex items-center justify-center">
                 <ShieldCheck className="w-4 h-4 text-[#38D9E6]" />
               </div>
             </div>
@@ -88,7 +88,7 @@ export const ForgotPasswordPage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@domain.com"
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
                 />
               </div>
             </div>
@@ -103,7 +103,7 @@ export const ForgotPasswordPage: React.FC = () => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Minimum 6 characters"
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
                 />
               </div>
             </div>

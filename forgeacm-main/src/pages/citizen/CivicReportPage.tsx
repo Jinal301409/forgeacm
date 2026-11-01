@@ -173,7 +173,7 @@ export const CivicReportPage: React.FC = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Hazardous Road Cavities Near Bus Stop"
-              className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+              className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
             />
           </div>
 
@@ -183,7 +183,7 @@ export const CivicReportPage: React.FC = () => {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+                className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
               >
                 {categories.map((c) => (
                   <option key={c} value={c}>
@@ -201,7 +201,7 @@ export const CivicReportPage: React.FC = () => {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Navrangpura Bus Bay"
-                className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+                className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
               />
             </div>
           </div>
@@ -213,7 +213,7 @@ export const CivicReportPage: React.FC = () => {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Street name, landmark, ward number"
-              className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+              className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
             />
           </div>
 
@@ -242,7 +242,7 @@ export const CivicReportPage: React.FC = () => {
                   step="0.0001"
                   value={latitude}
                   onChange={(e) => setLatitude(parseFloat(e.target.value))}
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-lg px-3 py-1.5 text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-lg px-3 py-1.5 text-white"
                 />
               </div>
               <div>
@@ -252,7 +252,7 @@ export const CivicReportPage: React.FC = () => {
                   step="0.0001"
                   value={longitude}
                   onChange={(e) => setLongitude(parseFloat(e.target.value))}
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-lg px-3 py-1.5 text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-lg px-3 py-1.5 text-white"
                 />
               </div>
             </div>
@@ -266,7 +266,7 @@ export const CivicReportPage: React.FC = () => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe the severity, depth, pedestrian hazard, or duration of the issue..."
-              className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+              className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#477BFF]"
             />
           </div>
 
@@ -296,7 +296,7 @@ export const CivicReportPage: React.FC = () => {
               Photographic Evidence
             </span>
 
-            <div className="relative aspect-video rounded-2xl overflow-hidden bg-[#11182B] border border-white/[0.1] group">
+            <div className="relative aspect-video rounded-2xl overflow-hidden bg-[#080B12] border border-white/[0.1] group">
               <img
                 src={imagePreview}
                 alt="Civic issue evidence"

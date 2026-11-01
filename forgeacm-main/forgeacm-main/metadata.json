@@ -1,6 +1,0 @@
-{
-  "name": "CivicLens AI",
-  "description": "Understand. Verify. Act. An AI-powered civic intelligence and digital governance platform bridging citizens, public policy, scheme discovery, verified grievances, and transparency.",
-  "requestFramePermissions": ["geolocation"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

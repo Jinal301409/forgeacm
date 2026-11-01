@@ -191,7 +191,7 @@ export const PolicyExplainerPage: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-3">
           {/* Target Language Dropdown */}
-          <div className="flex items-center gap-2 bg-[#11182B] border border-white/[0.1] rounded-xl px-3 py-2 text-xs">
+          <div className="flex items-center gap-2 bg-[#080B12] border border-white/[0.1] rounded-xl px-3 py-2 text-xs">
             <Globe className="w-4 h-4 text-[#38D9E6]" />
             <select
               value={selectedLanguage}
@@ -199,7 +199,7 @@ export const PolicyExplainerPage: React.FC = () => {
               className="bg-transparent text-white focus:outline-none cursor-pointer"
             >
               {LANGUAGES.map((l) => (
-                <option key={l.code} value={l.name} className="bg-[#11182B] text-white">
+                <option key={l.code} value={l.name} className="bg-[#080B12] text-white">
                   {l.name} ({l.nativeName})
                 </option>
               ))}
@@ -496,7 +496,7 @@ export const PolicyExplainerPage: React.FC = () => {
                         value={chatQuestion}
                         onChange={(e) => setChatQuestion(e.target.value)}
                         placeholder="e.g. Can tenant occupants apply for this subsidy?"
-                        className="flex-1 bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#477BFF]"
+                        className="flex-1 bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#477BFF]"
                       />
                       <button
                         type="submit"
@@ -518,7 +518,7 @@ export const PolicyExplainerPage: React.FC = () => {
       {/* Upload Document Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-[#0F172A] border border-white/[0.1] rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl">
+          <div className="w-full max-w-xl bg-[#080B12] border border-white/[0.1] rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <Upload className="w-4 h-4 text-[#38D9E6]" />
@@ -541,7 +541,7 @@ export const PolicyExplainerPage: React.FC = () => {
                   value={uploadTitle}
                   onChange={(e) => setUploadTitle(e.target.value)}
                   placeholder="e.g. Revised Electric Vehicle Urban Subsidy Circular 2025"
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
                 />
               </div>
 
@@ -553,7 +553,7 @@ export const PolicyExplainerPage: React.FC = () => {
                     value={uploadAuthority}
                     onChange={(e) => setUploadAuthority(e.target.value)}
                     placeholder="e.g. Ministry of Housing & Urban Affairs"
-                    className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
+                    className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
                   />
                 </div>
                 <div className="space-y-1">
@@ -561,7 +561,7 @@ export const PolicyExplainerPage: React.FC = () => {
                   <select
                     value={uploadCategory}
                     onChange={(e) => setUploadCategory(e.target.value)}
-                    className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
+                    className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
                   >
                     <option value="Energy & Sustainability">Energy & Sustainability</option>
                     <option value="Healthcare">Healthcare</option>
@@ -579,7 +579,7 @@ export const PolicyExplainerPage: React.FC = () => {
                   value={uploadSourceUrl}
                   onChange={(e) => setUploadSourceUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
                 />
               </div>
 
@@ -591,7 +591,7 @@ export const PolicyExplainerPage: React.FC = () => {
                   value={uploadContent}
                   onChange={(e) => setUploadContent(e.target.value)}
                   placeholder="Paste official gazette notification text here..."
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl p-3 text-xs text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl p-3 text-xs text-white"
                 />
               </div>
 

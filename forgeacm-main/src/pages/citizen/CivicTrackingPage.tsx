@@ -260,7 +260,7 @@ export const CivicTrackingPage: React.FC = () => {
                   <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
                     Site Evidence
                   </span>
-                  <div className="aspect-video rounded-2xl overflow-hidden bg-[#11182B] border border-white/[0.1]">
+                  <div className="aspect-video rounded-2xl overflow-hidden bg-[#080B12] border border-white/[0.1]">
                     <img
                       src={selectedReport.imageUrls[0]}
                       alt="Grievance Evidence"
@@ -332,7 +332,7 @@ export const CivicTrackingPage: React.FC = () => {
                 <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-white/[0.1]">
                   {(selectedReport.statusHistory || []).map((step, idx) => (
                     <div key={idx} className="relative space-y-1 text-xs">
-                      <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#477BFF] ring-4 ring-[#0B1020]" />
+                      <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#477BFF] ring-4 ring-[#04060A]" />
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-white">{step.newStatus}</span>
                         <span className="text-[10px] text-slate-500 font-mono">
@@ -385,7 +385,7 @@ export const CivicTrackingPage: React.FC = () => {
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       placeholder="Type official inquiry or field crew update..."
-                      className="flex-1 bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#477BFF]"
+                      className="flex-1 bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#477BFF]"
                     />
                     <button
                       type="submit"

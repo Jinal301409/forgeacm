@@ -127,7 +127,7 @@ export const FactVerificationPage: React.FC = () => {
                 value={claimText}
                 onChange={(e) => setClaimText(e.target.value)}
                 placeholder="Paste the viral claim, forwarded WhatsApp message, or news claim..."
-                className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-[#477BFF]"
+                className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-[#477BFF]"
               />
             </div>
 
@@ -140,7 +140,7 @@ export const FactVerificationPage: React.FC = () => {
                 value={sourceUrl}
                 onChange={(e) => setSourceUrl(e.target.value)}
                 placeholder="https://t.me/... or https://x.com/..."
-                className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-[#477BFF]"
+                className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-[#477BFF]"
               />
             </div>
 
@@ -150,7 +150,7 @@ export const FactVerificationPage: React.FC = () => {
                 Attach Screenshot Evidence (Optional)
               </label>
               {imagePreview ? (
-                <div className="relative aspect-video rounded-xl overflow-hidden bg-[#11182B] border border-white/[0.1]">
+                <div className="relative aspect-video rounded-xl overflow-hidden bg-[#080B12] border border-white/[0.1]">
                   <img src={imagePreview} alt="Screenshot" className="w-full h-full object-cover" />
                   <button
                     type="button"

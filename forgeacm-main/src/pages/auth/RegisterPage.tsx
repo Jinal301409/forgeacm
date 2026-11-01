@@ -83,15 +83,15 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-16 flex items-center justify-center relative overflow-hidden bg-[#0B1020] px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pt-24 pb-16 flex items-center justify-center relative overflow-hidden auth-canvas bg-[#04060A] px-4 sm:px-6 lg:px-8">
       {/* Background glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-[#477BFF]/10 blur-[150px] rounded-full pointer-events-none" />
 
-      <div className="w-full max-w-2xl rounded-3xl bg-[#0F172A]/90 border border-white/[0.1] shadow-2xl backdrop-blur-2xl p-8 sm:p-10 relative z-10 space-y-6">
+      <div className="w-full max-w-2xl rounded-3xl bg-[#080B12]/90 border border-white/[0.1] shadow-2xl backdrop-blur-2xl p-8 sm:p-10 relative z-10 space-y-6">
         <div className="text-center space-y-2">
           <Link to="/" className="inline-flex items-center gap-2 group mb-2">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#477BFF] to-[#38D9E6] p-[1.5px]">
-              <div className="w-full h-full bg-[#0B1020] rounded-[10px] flex items-center justify-center">
+              <div className="w-full h-full bg-[#04060A] rounded-[10px] flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5 text-[#38D9E6]" />
               </div>
             </div>
@@ -127,7 +127,7 @@ export const RegisterPage: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Priya Patel"
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
                 />
               </div>
             </div>
@@ -143,7 +143,7 @@ export const RegisterPage: React.FC = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="name@domain.com"
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
                 />
               </div>
             </div>
@@ -158,7 +158,7 @@ export const RegisterPage: React.FC = () => {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="+91 98765 43210"
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
                 />
               </div>
             </div>
@@ -171,7 +171,7 @@ export const RegisterPage: React.FC = () => {
                 <select
                   value={formData.preferredLanguage}
                   onChange={(e) => setFormData({ ...formData, preferredLanguage: e.target.value })}
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
                 >
                   {LANGUAGES.map((l) => (
                     <option key={l.code} value={l.name}>
@@ -190,7 +190,7 @@ export const RegisterPage: React.FC = () => {
                 <select
                   value={formData.state}
                   onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
                 >
                   {indianStates.map((st) => (
                     <option key={st} value={st}>
@@ -210,7 +210,7 @@ export const RegisterPage: React.FC = () => {
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                 placeholder="e.g. Ahmedabad"
-                className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+                className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
               />
             </div>
 
@@ -225,7 +225,7 @@ export const RegisterPage: React.FC = () => {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="Minimum 6 characters"
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
                 />
               </div>
             </div>
@@ -241,7 +241,7 @@ export const RegisterPage: React.FC = () => {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   placeholder="Re-enter password"
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#477BFF]"
                 />
               </div>
             </div>
@@ -253,7 +253,7 @@ export const RegisterPage: React.FC = () => {
               id="terms"
               checked={formData.acceptTerms}
               onChange={(e) => setFormData({ ...formData, acceptTerms: e.target.checked })}
-              className="mt-1 rounded bg-[#11182B] border-white/[0.2] text-[#477BFF] w-4 h-4"
+              className="mt-1 rounded bg-[#080B12] border-white/[0.2] text-[#477BFF] w-4 h-4"
             />
             <label htmlFor="terms" className="ml-2.5 text-xs text-slate-400 leading-normal">
               I accept the{' '}

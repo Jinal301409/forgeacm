@@ -179,7 +179,7 @@ export const SchemeExplorerPage: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by keyword, scheme name, or benefit..."
-              className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#477BFF]"
+              className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#477BFF]"
             />
           </div>
           <button
@@ -214,7 +214,7 @@ export const SchemeExplorerPage: React.FC = () => {
           <select
             value={selectedState}
             onChange={(e) => setSelectedState(e.target.value)}
-            className="bg-[#11182B] border border-white/[0.1] rounded-lg px-2.5 py-1 text-white focus:outline-none"
+            className="bg-[#080B12] border border-white/[0.1] rounded-lg px-2.5 py-1 text-white focus:outline-none"
           >
             {states.map((st) => (
               <option key={st} value={st}>
@@ -408,7 +408,7 @@ export const SchemeExplorerPage: React.FC = () => {
       {/* AI Eligibility Evaluation Modal */}
       {eligibilityModalScheme && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-[#0F172A] border border-white/[0.1] rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-xl bg-[#080B12] border border-white/[0.1] rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-mono text-[#38D9E6]">
@@ -437,7 +437,7 @@ export const SchemeExplorerPage: React.FC = () => {
                     type="text"
                     value={checkerProfile.state}
                     onChange={(e) => setCheckerProfile({ ...checkerProfile, state: e.target.value })}
-                    className="w-full bg-[#11182B] border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-white"
+                    className="w-full bg-[#080B12] border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-white"
                   />
                 </div>
                 <div>
@@ -446,7 +446,7 @@ export const SchemeExplorerPage: React.FC = () => {
                     type="number"
                     value={checkerProfile.annualIncome}
                     onChange={(e) => setCheckerProfile({ ...checkerProfile, annualIncome: Number(e.target.value) })}
-                    className="w-full bg-[#11182B] border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-white"
+                    className="w-full bg-[#080B12] border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-white"
                   />
                 </div>
                 <div>
@@ -455,7 +455,7 @@ export const SchemeExplorerPage: React.FC = () => {
                     type="text"
                     value={checkerProfile.occupation}
                     onChange={(e) => setCheckerProfile({ ...checkerProfile, occupation: e.target.value })}
-                    className="w-full bg-[#11182B] border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-white"
+                    className="w-full bg-[#080B12] border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-white"
                   />
                 </div>
                 <div>
@@ -463,7 +463,7 @@ export const SchemeExplorerPage: React.FC = () => {
                   <select
                     value={checkerProfile.category}
                     onChange={(e) => setCheckerProfile({ ...checkerProfile, category: e.target.value })}
-                    className="w-full bg-[#11182B] border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-white"
+                    className="w-full bg-[#080B12] border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-white"
                   >
                     <option value="General">General</option>
                     <option value="OBC">OBC</option>

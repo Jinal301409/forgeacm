@@ -140,7 +140,7 @@ export const PolicyManagementPage: React.FC = () => {
       {/* Add Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-[#0F172A] border border-white/[0.1] rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl">
+          <div className="w-full max-w-xl bg-[#080B12] border border-white/[0.1] rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
               <h3 className="text-base font-bold text-white">Publish Policy to Repository</h3>
               <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white text-xs">
@@ -157,7 +157,7 @@ export const PolicyManagementPage: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. National Urban Clean Air Action Guidelines"
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
                 />
               </div>
 
@@ -169,7 +169,7 @@ export const PolicyManagementPage: React.FC = () => {
                     value={authority}
                     onChange={(e) => setAuthority(e.target.value)}
                     placeholder="e.g. Ministry of Environment"
-                    className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
+                    className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
                   />
                 </div>
                 <div className="space-y-1">
@@ -177,7 +177,7 @@ export const PolicyManagementPage: React.FC = () => {
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
+                    className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-white"
                   >
                     <option value="Energy & Sustainability">Energy & Sustainability</option>
                     <option value="Healthcare">Healthcare</option>
@@ -196,7 +196,7 @@ export const PolicyManagementPage: React.FC = () => {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Paste gazette directives here..."
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl p-3 text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl p-3 text-white"
                 />
               </div>
 

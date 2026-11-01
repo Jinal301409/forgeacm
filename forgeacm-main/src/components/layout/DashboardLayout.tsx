@@ -28,11 +28,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { PageBackground, usePageEffect } from '../backgrounds/PageBackground';
 import { useLanguage, SupportedLanguage } from '../../context/LanguageContext';
 
 export const DashboardLayout: React.FC = () => {
   const { user, logout, token } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const effect = usePageEffect();
   const { language, setLanguage, languages, t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -103,7 +105,8 @@ export const DashboardLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen app-bg app-text flex flex-col md:flex-row antialiased transition-colors duration-200">
+    <div className={`min-h-screen app-bg app-text flex flex-col md:flex-row antialiased transition-colors duration-200 ${effect ? 'live-bg-on' : ''}`}>
+      <PageBackground />
       {/* Sidebar Desktop */}
       <aside
         className={`hidden md:flex flex-col border-r border-[var(--border-color)] bg-[var(--bg-surface)] transition-all duration-300 relative z-30 ${

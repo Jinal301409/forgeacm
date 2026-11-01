@@ -80,7 +80,7 @@ export const SettingsPage: React.FC = () => {
               type="checkbox"
               checked={emailNotifs}
               onChange={(e) => setEmailNotifs(e.target.checked)}
-              className="rounded bg-[#11182B] text-[#477BFF] w-4 h-4"
+              className="rounded bg-[#080B12] text-[#477BFF] w-4 h-4"
             />
           </label>
 
@@ -93,7 +93,7 @@ export const SettingsPage: React.FC = () => {
               type="checkbox"
               checked={smsNotifs}
               onChange={(e) => setSmsNotifs(e.target.checked)}
-              className="rounded bg-[#11182B] text-[#477BFF] w-4 h-4"
+              className="rounded bg-[#080B12] text-[#477BFF] w-4 h-4"
             />
           </label>
         </div>

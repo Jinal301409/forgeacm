@@ -70,7 +70,7 @@ export const AuditLogsPage: React.FC = () => {
           <select
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
-            className="bg-[#11182B] border border-white/[0.1] rounded-xl px-3 py-1.5 text-white"
+            className="bg-[#080B12] border border-white/[0.1] rounded-xl px-3 py-1.5 text-white"
           >
             {actions.map((act) => (
               <option key={act} value={act}>
@@ -86,7 +86,7 @@ export const AuditLogsPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search user, entity, or details..."
-            className="bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
+            className="bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
           />
           <button type="submit" className="px-4 py-2 rounded-xl bg-[#477BFF] text-white text-xs font-semibold">
             Search
