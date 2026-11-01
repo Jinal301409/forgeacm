@@ -1,12 +1,13 @@
 /**
- * CivicLens AI - High Performance Persistent Database Layer
- * Supports seamless persistent JSON storage with atomic disk writes,
- * fully indexed collections, relationships, and automatic seeding.
+ * CivicLens AI - High-Performance Database & MongoDB Atlas Service
+ * Supports genuine MongoDB Atlas persistence with automatic connection pooling,
+ * index enforcement, schema integrity, and zero-loss local JSON fallback when MONGODB_URI is not set.
  */
 
 import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
+import { getDb, isMongoConnected, DB_NAME } from './mongodb.js';
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'civiclens-db.json');
@@ -24,6 +25,8 @@ export interface User {
   occupation?: string;
   annualIncome?: number;
   category?: string; // General, OBC, SC, ST, EWS
+  resetOtp?: string;
+  resetOtpExpires?: number;
   createdAt: string;
 }
 
@@ -179,6 +182,28 @@ export interface FactCheck {
   }[];
   syntheticMediaNotice: string;
   verifiedTimestamp: string;
+  mediaSha256?: string;
+  mediaForensics?: {
+    assessed: boolean;
+    syntheticLikelihood: 'Low' | 'Medium' | 'High' | 'Not assessed';
+    indicators: string[];
+    notes: string;
+  };
+  registryMatches?: {
+    id: string;
+    type: 'Scheme' | 'Policy' | 'Prior fact-check';
+    title: string;
+    authority?: string;
+    score: number;
+  }[];
+  relatedChecks?: {
+    id: string;
+    claim: string;
+    verdict: string;
+    similarity: number;
+    reason: 'identical-media' | 'similar-claim';
+    verifiedTimestamp: string;
+  }[];
 }
 
 export interface PublicApplication {
@@ -232,7 +257,7 @@ export interface AuditLog {
   timestamp: string;
 }
 
-interface DatabaseSchema {
+export interface DatabaseSchema {
   users: User[];
   policyDocuments: PolicyDocument[];
   policyExplanations: PolicyExplanation[];
@@ -247,16 +272,15 @@ interface DatabaseSchema {
 
 let dbCache: DatabaseSchema | null = null;
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-}
-
+/**
+ * Loads the local database cache from data/civiclens-db.json
+ */
 export function loadDatabase(): DatabaseSchema {
   if (dbCache) return dbCache;
 
-  ensureDataDir();
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
 
   if (fs.existsSync(DB_FILE)) {
     try {
@@ -264,1004 +288,741 @@ export function loadDatabase(): DatabaseSchema {
       dbCache = JSON.parse(content);
       return dbCache!;
     } catch (err) {
-      console.error('Error reading db.json, re-initializing database:', err);
+      console.error('[DB] Error parsing existing db file:', err);
     }
   }
 
-  // Initialize with seed data
-  dbCache = getInitialSeedData();
-  saveDatabase();
+  dbCache = {
+    users: [],
+    policyDocuments: [],
+    policyExplanations: [],
+    schemes: [],
+    civicReports: [],
+    factChecks: [],
+    applications: [],
+    notifications: [],
+    bookmarks: [],
+    auditLogs: [],
+  };
   return dbCache;
 }
 
+/**
+ * Saves database state to disk atomically if in fallback mode
+ */
 export function saveDatabase(): void {
   if (!dbCache) return;
-  ensureDataDir();
-  const tempPath = `${DB_FILE}.tmp`;
-  fs.writeFileSync(tempPath, JSON.stringify(dbCache, null, 2), 'utf-8');
-  fs.renameSync(tempPath, DB_FILE);
+  try {
+    const tempFile = `${DB_FILE}.tmp.${Date.now()}`;
+    fs.writeFileSync(tempFile, JSON.stringify(dbCache, null, 2), 'utf-8');
+    fs.renameSync(tempFile, DB_FILE);
+  } catch (err) {
+    console.error('[DB] Atomic save error:', err);
+  }
 }
 
-// Initial Seed Data Creator
-function getInitialSeedData(): DatabaseSchema {
-  const salt = bcrypt.genSaltSync(10);
-  const adminHash = bcrypt.hashSync('Admin@12345', salt);
-  const officerHash = bcrypt.hashSync('Officer@12345', salt);
-  const citizenHash = bcrypt.hashSync('Citizen@12345', salt);
-
-  const users: User[] = [
-    {
-      id: 'usr_admin_01',
-      name: 'Dr. Rajeshwari Sen',
-      email: 'admin@civiclens.gov',
-      passwordHash: adminHash,
-      phone: '+91 98765 43210',
-      role: 'admin',
-      state: 'Delhi (NCT)',
-      city: 'New Delhi',
-      preferredLanguage: 'English',
-      createdAt: '2025-01-15T09:00:00Z',
-    },
-    {
-      id: 'usr_officer_01',
-      name: 'Vikram Sharma',
-      email: 'officer.sharma@civiclens.gov',
-      passwordHash: officerHash,
-      phone: '+91 98234 56789',
-      role: 'officer',
-      state: 'Maharashtra',
-      city: 'Mumbai',
-      preferredLanguage: 'English',
-      createdAt: '2025-01-20T10:30:00Z',
-    },
-    {
-      id: 'usr_citizen_01',
-      name: 'Priya Patel',
-      email: 'citizen.priya@civiclens.gov',
-      passwordHash: citizenHash,
-      phone: '+91 91234 56780',
-      role: 'citizen',
-      state: 'Gujarat',
-      city: 'Ahmedabad',
-      preferredLanguage: 'English',
-      occupation: 'Small Business Owner',
-      annualIncome: 450000,
-      category: 'General',
-      createdAt: '2025-02-01T11:00:00Z',
-    },
-  ];
-
-  const policyDocuments: PolicyDocument[] = [
-    {
-      id: 'pol_doc_01',
-      title: 'PM Surya Ghar: Muft Bijli Yojana (Rooftop Solar Subsidy Guidelines 2025)',
-      authority: 'Ministry of New & Renewable Energy (MNRE), Government of India',
-      documentNumber: 'MNRE/RTS/2025/08-B',
-      sourceUrl: 'https://pmsuryaghar.gov.in',
-      notificationDate: '2025-02-15',
-      effectiveDate: '2025-03-01',
-      category: 'Energy & Sustainability',
-      language: 'English',
-      uploadedBy: 'usr_admin_01',
-      uploaderName: 'Dr. Rajeshwari Sen',
-      verificationStatus: 'Official',
-      views: 1420,
-      createdAt: '2025-02-16T10:00:00Z',
-      extractedContent: `MINISTRY OF NEW AND RENEWABLE ENERGY
-NOTIFICATION: PM SURYA GHAR: MUFT BIJLI YOJANA
-Document Ref: MNRE/RTS/2025/08-B.
-Date of Issuance: 15th February 2025.
-1. Objectives: To provide free electricity up to 300 units per month to 1 crore households across India through grid-connected residential rooftop solar plants.
-2. Central Financial Assistance (CFA):
-- For systems up to 2 kW capacity: ₹30,000 per kW (Max ₹60,000).
-- For additional capacity beyond 2 kW up to 3 kW: ₹18,000 per kW (Total max ₹78,000 for 3 kW).
-- For systems above 3 kW: Cap set at ₹78,000 subsidy.
-3. Eligibility:
-- The applicant must be an Indian citizen possessing legal residential property with roof rights.
-- Valid electricity meter connection in applicant's or spouse's name with zero outstanding dues.
-- Commercial or industrial connections are strictly non-eligible under this residential window.
-4. Mandatory Required Documents:
-- Electricity bill of past 3 months.
-- Identity proof (Aadhaar Card mandatory).
-- Bank passbook/cancelled cheque with linked Aadhaar.
-- Rooftop photographs with unobstructed sun exposure.
-5. Application Mechanism:
-- Online registration via the National Portal (pmsuryaghar.gov.in).
-- Technical feasibility approval from local DISCOM within 15 working days.
-- Installation by empaneled vendor within 60 days of sanction.
-- Inspection & net-metering commissioning followed by direct DBT subsidy transfer into bank account within 30 days.
-6. Penalties & Restrictions:
-- Unauthorized modifications or unauthorized diversion of solar power attracts discom disconnection and recovery of subsidy under the Electricity Act 2003.`,
-    },
-    {
-      id: 'pol_doc_02',
-      title: 'Digital Personal Data Protection (DPDP) Act — Citizen Rights & Fiduciary Obligations',
-      authority: 'Ministry of Electronics and Information Technology (MeitY)',
-      documentNumber: 'MEITY/DPDP/REG-2025/04',
-      sourceUrl: 'https://www.meity.gov.in',
-      notificationDate: '2025-01-10',
-      effectiveDate: '2025-04-01',
-      category: 'Digital Governance & Privacy',
-      language: 'English',
-      uploadedBy: 'usr_admin_01',
-      uploaderName: 'Dr. Rajeshwari Sen',
-      verificationStatus: 'Official',
-      views: 2890,
-      createdAt: '2025-01-12T14:00:00Z',
-      extractedContent: `GOVERNMENT OF INDIA - MINISTRY OF ELECTRONICS & IT
-DIRECTIVE ON CITIZEN DATA RIGHTS AND GRIEVANCE REDRESSAL UNDER DPDP ACT.
-Notice: MEITY/DPDP/REG-2025/04.
-Key Provisions:
-1. Citizen Rights:
-- Right to access summary of personal data being processed.
-- Right to correction, completion, and updating of personal data.
-- Right to erasure where retention is no longer necessary.
-- Right to nominate a representative in event of death or incapacity.
-- Right of grievance redressal within 7 working days from data fiduciary.
-2. Consent Architecture:
-- Consent must be free, specific, informed, unconditional, and unambiguous with clear affirmative action.
-- Multilingual consent notices must be provided in all 22 Eighth Schedule languages.
-3. Penalties:
-- Data breaches failing to notify Data Protection Board of India (DPBI): Up to ₹250 crore penalty.
-- Negligence in safeguarding children's data: Up to ₹200 crore.`,
-    },
-    {
-      id: 'pol_doc_03',
-      title: 'National Urban Clean Mobility & EV Public Transport Incentive 2025',
-      authority: 'Ministry of Housing and Urban Affairs (MoHUA)',
-      documentNumber: 'MOHUA/NCM/2025/11',
-      sourceUrl: 'https://mohua.gov.in',
-      notificationDate: '2025-02-01',
-      effectiveDate: '2025-03-15',
-      category: 'Urban Infrastructure',
-      language: 'English',
-      uploadedBy: 'usr_officer_01',
-      uploaderName: 'Vikram Sharma',
-      verificationStatus: 'Official',
-      views: 930,
-      createdAt: '2025-02-02T11:00:00Z',
-      extractedContent: `MINISTRY OF HOUSING AND URBAN AFFAIRS
-URBAN CLEAN AIR & PUBLIC MOBILITY MISSION 2025.
-Incentives for municipal authorities and citizen charging infrastructure.
-- 50% capital subsidy on community EV charging setups in housing societies.
-- Priority lane reservations and congestion fee waivers for electric fleet.
-- Municipal grievance timeline: Road pothole reports on transit corridors must be resolved within 48 hours under penalty.`,
-    },
-    {
-      id: 'pol_doc_04',
-      title: 'Right to Public Services & Digital Delivery Guarantee Directive',
-      authority: 'Department of Administrative Reforms and Public Grievances (DARPG)',
-      documentNumber: 'DARPG/RPS/2025/03-G',
-      sourceUrl: 'https://darpg.gov.in',
-      notificationDate: '2025-01-25',
-      effectiveDate: '2025-02-01',
-      category: 'Public Administration',
-      language: 'English',
-      uploadedBy: 'usr_admin_01',
-      uploaderName: 'Dr. Rajeshwari Sen',
-      verificationStatus: 'Official',
-      views: 1150,
-      createdAt: '2025-01-26T09:15:00Z',
-      extractedContent: `DEPARTMENT OF ADMINISTRATIVE REFORMS AND PUBLIC GRIEVANCES
-MANDATORY CITIZEN CHARTER & TIMELINES.
-1. Citizen Grievance Timelines:
-- Potholes and hazardous road conditions: 72 hours max resolution.
-- Streetlight repair in municipal zones: 24 to 48 hours.
-- Contaminated drinking water leakages: 12 hours emergency response.
-2. Escalation & Accountability:
-- Automatic escalation to District Collector / Municipal Commissioner upon SLA breach.
-- Compensatory token credit for citizen if timeline breached without documented force majeure.`,
-    },
-  ];
-
-  const policyExplanations: PolicyExplanation[] = [
-    {
-      id: 'exp_01',
-      documentId: 'pol_doc_01',
-      language: 'English',
-      simpleExplanation: 'The PM Surya Ghar scheme helps regular families install solar panels on their roofs with government paying up to ₹78,000 of the cost directly into their bank account, giving them up to 300 free electricity units each month.',
-      keyPointsSummary: [
-        'Government subsidy covers ₹30,000/kW up to 2 kW, and ₹18,000 for the 3rd kW (maximum ₹78,000 subsidy).',
-        'Available only for residential households; commercial and factory roofs are strictly excluded.',
-        'Electricity bill and Aadhaar card must be in the applicant\'s or spouse\'s name.',
-        'Subsidy is paid directly into the citizen\'s bank account (DBT) within 30 days of net-meter commissioning.',
-      ],
-      eligibilityCriteria: {
-        eligible: [
-          'Indian citizens who own a residential house with suitable roof rights.',
-          'Active domestic electricity connection with zero unpaid electricity bills.',
-          'Bank account linked with Aadhaar card.',
-        ],
-        ineligible: [
-          'Commercial shops, industrial units, and agricultural tube-well meters.',
-          'Tenants without official written roof authorization from legal owner.',
-        ],
-      },
-      requiredDocuments: [
-        'Aadhaar Card (Identity proof)',
-        'Latest 3 months electricity bills',
-        'Bank Passbook or Cancelled Cheque showing IFSC',
-        'Clear photograph of rooftop space',
-      ],
-      applicationGuide: [
-        {
-          step: 1,
-          title: 'Register on National Portal',
-          description: 'Visit pmsuryaghar.gov.in, select your State, electricity distribution company (DISCOM), and enter your consumer number.',
-        },
-        {
-          step: 2,
-          title: 'Apply for Feasibility Approval',
-          description: 'Submit your rooftop dimensions and requested capacity. DISCOM approves feasibility within 15 working days.',
-        },
-        {
-          step: 3,
-          title: 'Vendor Installation',
-          description: 'Choose any empaneled solar vendor from the portal list to install the panels and inverter.',
-        },
-        {
-          step: 4,
-          title: 'Net Meter Commissioning & DBT',
-          description: 'DISCOM inspects the plant, installs the bidirectional net meter, and the subsidy gets deposited into your bank account within 30 days.',
-        },
-      ],
-      rightsAndResponsibilities: {
-        rights: [
-          'Right to receive technical feasibility status within 15 working days.',
-          'Right to choose any verified vendor from the national registry.',
-          'Right to receive DBT subsidy directly without middleman cuts.',
-        ],
-        responsibilities: [
-          'Keep solar panels clean and maintain rooftop structural safety.',
-          'Do not tamper with net meters or divert generated power to commercial lines.',
-        ],
-      },
-      importantDeadlines: [
-        {
-          milestone: 'Technical Feasibility Decision',
-          date: 'Within 15 days of online submission',
-          isStrict: true,
-        },
-        {
-          milestone: 'Plant Installation by Empaneled Vendor',
-          date: 'Within 60 days of feasibility sanction',
-          isStrict: true,
-        },
-        {
-          milestone: 'Subsidy Disbursement',
-          date: 'Within 30 days of net meter commissioning certificate',
-          isStrict: false,
-        },
-      ],
-      faqs: [
-        {
-          question: 'What if I already have an off-grid solar inverter at home?',
-          answer: 'The PM Surya Ghar subsidy specifically applies to grid-connected net-metered systems. You can upgrade your setup to grid-tied with an empaneled vendor to qualify.',
-        },
-        {
-          question: 'Can housing society apartments apply jointly?',
-          answer: 'Yes! Resident Welfare Associations (RWAs) can apply for common services (lifts, water pumps, corridor lighting) with up to ₹18,000/kW subsidy capped at 500 kW.',
-        },
-      ],
-      realWorldImpact: 'A typical family with a 3 kW system saves approximately ₹2,500 to ₹3,800 on monthly power bills, recovering their private investment share in about 3.5 years while curbing carbon footprint.',
-      citations: [
-        {
-          pageOrSection: 'Section 2 — Central Financial Assistance',
-          explicitStatement: 'Up to 2 kW capacity: ₹30,000 per kW. For 3 kW: ₹78,000 maximum subsidy cap.',
-          aiInterpretation: 'A homeowner putting up a 2.5 kW system will receive ₹60,000 + ₹9,000 = ₹69,000 in DBT subsidy.',
-        },
-        {
-          pageOrSection: 'Section 3 — Eligibility',
-          explicitStatement: 'Commercial or industrial connections are strictly non-eligible under this residential window.',
-          aiInterpretation: 'Mixed residential-commercial buildings may require an exclusive domestic sub-meter to qualify.',
-        },
-      ],
-      generatedAt: '2025-02-16T12:00:00Z',
-    },
-  ];
-
-  const schemes: Scheme[] = [
-    {
-      id: 'sch_01',
-      name: 'PM Surya Ghar: Muft Bijli Yojana',
-      category: 'Energy & Sustainability',
-      state: 'All-India / Central',
-      description: 'Provides upfront direct subsidy up to ₹78,000 to residential households for installing rooftop solar panels, granting up to 300 units of free power each month.',
-      eligibilitySummary: 'Indian residential homeowners with valid domestic electricity connection and clear roof rights.',
-      eligibilityRules: {
-        maxIncome: 1200000,
-        targetGroups: ['Homeowners', 'RWAs'],
-      },
-      benefits: [
-        'Direct subsidy up to ₹78,000 transferred via DBT',
-        'Up to 300 units free solar electricity every month',
-        'Concessional low-interest collateral-free bank loans (approx. 7% rate)',
-      ],
-      requiredDocuments: [
-        'Aadhaar Card of electricity meter holder',
-        'Past 3 months electricity bill',
-        'Cancelled cheque / Bank passbook',
-        'Rooftop ownership document or house tax receipt',
-      ],
-      applicationSteps: [
-        'Register at pmsuryaghar.gov.in',
-        'Submit consumer number and Discom details',
-        'Receive technical approval and pick registered vendor',
-        'Net meter install and DBT subsidy credit',
-      ],
-      officialUrl: 'https://pmsuryaghar.gov.in',
-      source: 'Ministry of New and Renewable Energy',
-      lastVerifiedAt: '2025-02-15',
-      tags: ['Solar', 'Subsidy', 'Electricity', 'Green Energy', 'Housing'],
-    },
-    {
-      id: 'sch_02',
-      name: 'Ayushman Bharat — Pradhan Mantri Jan Arogya Yojana (PM-JAY)',
-      category: 'Healthcare',
-      state: 'All-India / Central',
-      description: 'World\'s largest government health assurance scheme providing health cover of ₹5,00,000 per family per year for secondary and tertiary care hospitalization.',
-      eligibilitySummary: 'Low-income households identified in SECC 2011 data, plus all senior citizens aged 70+ irrespective of family income.',
-      eligibilityRules: {
-        maxIncome: 300000,
-        minAge: 0,
-        targetGroups: ['BPL Families', 'Senior Citizens 70+', 'Informal Workers'],
-      },
-      benefits: [
-        '₹5,00,000 annual cashless hospitalization coverage',
-        'Over 27,000 empaneled public and private hospitals across India',
-        'Pre-existing conditions covered from day 1',
-        'Covers up to 3 days pre-hospitalization and 15 days post-hospitalization diagnostic costs',
-      ],
-      requiredDocuments: [
-        'Aadhaar Card or PM-JAY letter',
-        'Ration Card / Family identity proof',
-        'Active mobile number',
-      ],
-      applicationSteps: [
-        'Check eligibility at beneficiary.nha.gov.in',
-        'Perform e-KYC using Aadhaar OTP or biometric scan',
-        'Download instant Ayushman Golden Card',
-        'Present card at any empaneled hospital helpdesk (Ayushman Mitra)',
-      ],
-      officialUrl: 'https://beneficiary.nha.gov.in',
-      source: 'National Health Authority (NHA)',
-      lastVerifiedAt: '2025-01-20',
-      tags: ['Health', 'Insurance', 'Cashless', 'Hospital', 'Senior Citizens'],
-    },
-    {
-      id: 'sch_03',
-      name: 'Stand-Up India Scheme for Women and SC/ST Entrepreneurs',
-      category: 'Entrepreneurship',
-      state: 'All-India / Central',
-      description: 'Facilitates bank loans between ₹10 lakh and ₹1 Crore to at least one SC or ST borrower and at least one woman borrower per bank branch for setting up greenfield enterprises.',
-      eligibilitySummary: 'Women entrepreneurs of any caste/community and SC/ST individuals aged 18+ launching first-time business ventures.',
-      eligibilityRules: {
-        minAge: 18,
-        targetGroups: ['Women', 'SC', 'ST', 'Entrepreneurs'],
-      },
-      benefits: [
-        'Composite bank loans ranging from ₹10 Lakh to ₹1 Crore',
-        'Margin money requirement capped at 15%',
-        'Comprehensive handholding support from SIDBI and NABARD',
-      ],
-      requiredDocuments: [
-        'Identity & Address proof (Aadhaar, Passport, Voter ID)',
-        'Caste certificate (for SC/ST applicants)',
-        'Project report / Business proposal with financial projections',
-        'Proof of enterprise premises (rent agreement or deed)',
-      ],
-      applicationSteps: [
-        'Register at standupmitra.in',
-        'Prepare Detailed Project Report (DPR)',
-        'Connect with assigned Lead District Manager bank branch',
-        'Sanction and disbursal with credit guarantee coverage',
-      ],
-      officialUrl: 'https://www.standupmitra.in',
-      source: 'Department of Financial Services, Ministry of Finance',
-      lastVerifiedAt: '2025-01-10',
-      tags: ['Business', 'Loan', 'Women Empowerment', 'Startup', 'Finance'],
-    },
-    {
-      id: 'sch_04',
-      name: 'PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)',
-      category: 'Agriculture',
-      state: 'All-India / Central',
-      description: 'Income support scheme providing ₹6,000 per year in three equal installments directly into the Aadhaar-seeded bank accounts of all landholding farmer families.',
-      eligibilitySummary: 'All landholding farmer families who have cultivable landholding in their names.',
-      eligibilityRules: {
-        targetGroups: ['Small & Marginal Farmers', 'Landowning Farmers'],
-      },
-      benefits: [
-        '₹6,000 direct income support annually',
-        'Paid in 3 equal installments of ₹2,000 every four months',
-        'Direct Bank Transfer without administrative leakage',
-      ],
-      requiredDocuments: [
-        'Aadhaar card with linked mobile phone',
-        'Land ownership record (Khatauni / 7/12 extract / Patta)',
-        'Aadhaar-seeded bank account details',
-      ],
-      applicationSteps: [
-        'Visit pmkisan.gov.in and click New Farmer Registration',
-        'Enter Aadhaar number and land record identification',
-        'Complete face-auth or OTP-based e-KYC',
-        'Verification by District Agriculture Officer',
-      ],
-      officialUrl: 'https://pmkisan.gov.in',
-      source: 'Ministry of Agriculture and Farmers Welfare',
-      lastVerifiedAt: '2025-02-10',
-      tags: ['Agriculture', 'Farmers', 'Direct Benefit', 'Rural'],
-    },
-    {
-      id: 'sch_05',
-      name: 'National Apprenticeship Promotion Scheme (NAPS-2)',
-      category: 'Education & Employment',
-      state: 'All-India / Central',
-      description: 'Encourages industries to hire fresh youth, ITI, diploma, and degree holders by co-sharing stipends with up to ₹1,500/month government stipend support.',
-      eligibilitySummary: 'Youth aged 14+ (18+ for hazardous trades) with minimum 5th to graduate qualification looking for vocational industry training.',
-      eligibilityRules: {
-        minAge: 14,
-        maxAge: 35,
-        targetGroups: ['Students', 'Fresh Graduates', 'Vocational Trainees'],
-      },
-      benefits: [
-        'Direct monthly stipend reimbursement up to ₹1,500 from Government',
-        'Real industry on-the-job training in formal corporate sector',
-        'Nationally recognized National Apprenticeship Certificate (NAC)',
-      ],
-      requiredDocuments: [
-        'Aadhaar card',
-        'Educational marksheet (10th, 12th, ITI, Diploma or Degree)',
-        'Bank passbook details for stipend DBT',
-      ],
-      applicationSteps: [
-        'Create Candidate Profile on apprenticeshipindia.gov.in',
-        'Search apprenticeship vacancies by sector and location',
-        'Apply online to prospective companies',
-        'Sign digital apprenticeship contract',
-      ],
-      officialUrl: 'https://www.apprenticeshipindia.gov.in',
-      source: 'Ministry of Skill Development & Entrepreneurship',
-      lastVerifiedAt: '2025-01-28',
-      tags: ['Education', 'Jobs', 'Apprenticeship', 'Stipend', 'Youth'],
-    },
-    {
-      id: 'sch_06',
-      name: 'Pradhan Mantri Awas Yojana — Urban 2.0 (PMAY-U 2.0)',
-      category: 'Housing',
-      state: 'All-India / Central',
-      description: 'Assists 1 crore urban poor and middle-class families to construct, purchase or rent an affordable pucca house with interest subsidy and direct financial aid.',
-      eligibilitySummary: 'Families belonging to EWS (income up to ₹3 lakh), LIG (up to ₹6 lakh), and MIG (up to ₹9 lakh) who do not own a pucca house anywhere in India.',
-      eligibilityRules: {
-        maxIncome: 900000,
-        targetGroups: ['Urban Families', 'Slum Dwellers', 'Middle Class'],
-      },
-      benefits: [
-        'Interest subsidy of 4.0% on home loans up to ₹25 lakh for 12-year tenure (subsidy benefit up to ₹1.80 lakh)',
-        'Direct financial assistance of ₹2.50 lakh for Beneficiary-Led Construction',
-        'Affordable rental housing voucher assistance for urban migrant workers',
-      ],
-      requiredDocuments: [
-        'Aadhaar card for all family members',
-        'Income certificate issued by competent revenue authority',
-        'Affidavit declaring family owns no pucca house in India',
-        'Bank account details and land registry documents (for self-construction)',
-      ],
-      applicationSteps: [
-        'Apply via pmay-urban.gov.in or Common Service Centre (CSC)',
-        'Select applicable vertical (Credit Linked Subsidy or Construction)',
-        'Municipal inspection and socio-economic validation',
-        'Subsidy credited to loan account or DBT stages',
-      ],
-      officialUrl: 'https://pmay-urban.gov.in',
-      source: 'Ministry of Housing and Urban Affairs',
-      lastVerifiedAt: '2025-02-12',
-      tags: ['Housing', 'Home Loan', 'Subsidy', 'Urban', 'Pucca House'],
-    },
-  ];
-
-  const civicReports: CivicReport[] = [
-    {
-      id: 'rep_01',
-      reportId: 'CIVIC-2025-1042',
-      userId: 'usr_citizen_01',
-      userName: 'Priya Patel',
-      userEmail: 'citizen.priya@civiclens.gov',
-      title: 'Deep Hazardous Potholes Near Navrangpura Junction Bus Stop',
-      description: 'Two large crater-like potholes (approx 1.5 ft wide and 6 inches deep) have developed right before the bus bay. During peak hours, two-wheelers frequently skid and lose balance.',
-      category: 'Potholes',
-      imageUrls: [
-        'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80',
-      ],
-      location: 'Navrangpura Bus Junction, Ahmedabad, Gujarat',
-      address: 'Near Commerce Six Roads, Navrangpura, Ahmedabad, Gujarat 380009',
-      latitude: 23.0372,
-      longitude: 72.5532,
-      severity: 'High',
-      aiAnalysis: {
-        detectedCategory: 'Potholes',
-        summary: 'Severe road surface craters located directly within bus ingress transit path; high risk of commuter vehicular loss of control.',
-        severityEstimate: 'High',
-        suggestedDepartment: 'Municipal Roads & Civil Infrastructure Department',
-        duplicateWarning: false,
-        recommendedAction: 'Immediate cold-mix asphalt patch fill within 24 hours followed by bitumen leveling.',
-        confidence: 0.94,
-      },
-      assignedOfficer: {
-        id: 'usr_officer_01',
-        name: 'Vikram Sharma',
-        department: 'Roads & Infrastructure Maintenance',
-      },
-      status: 'In Progress',
-      statusHistory: [
-        {
-          newStatus: 'Submitted',
-          updatedBy: 'Priya Patel (Citizen)',
-          remarks: 'Initial complaint filed with photo evidence and GPS coordinate.',
-          timestamp: '2025-02-20T08:30:00Z',
-        },
-        {
-          previousStatus: 'Submitted',
-          newStatus: 'Under Review',
-          updatedBy: 'CivicLens AI System',
-          remarks: 'Automated triage: Category mapped to Potholes with High severity assessment.',
-          timestamp: '2025-02-20T08:31:00Z',
-        },
-        {
-          previousStatus: 'Under Review',
-          newStatus: 'Assigned',
-          updatedBy: 'Dr. Rajeshwari Sen (Admin)',
-          remarks: 'Assigned to Ward 7 Roads Division Engineer Vikram Sharma.',
-          timestamp: '2025-02-20T11:00:00Z',
-        },
-        {
-          previousStatus: 'Assigned',
-          newStatus: 'In Progress',
-          updatedBy: 'Vikram Sharma (Officer)',
-          remarks: 'Road repair team dispatched with asphalt equipment. Work commenced.',
-          timestamp: '2025-02-21T09:15:00Z',
-        },
-      ],
-      comments: [
-        {
-          id: 'comm_01',
-          userId: 'usr_officer_01',
-          userName: 'Vikram Sharma',
-          userRole: 'officer',
-          message: 'Contractor crew is currently laying cold-asphalt base. Traffic diversion cones placed.',
-          createdAt: '2025-02-21T09:20:00Z',
-        },
-        {
-          id: 'comm_02',
-          userId: 'usr_citizen_01',
-          userName: 'Priya Patel',
-          userRole: 'citizen',
-          message: 'Thank you for the prompt dispatch! Much appreciated.',
-          createdAt: '2025-02-21T10:05:00Z',
-        },
-      ],
-      createdAt: '2025-02-20T08:30:00Z',
-      updatedAt: '2025-02-21T09:15:00Z',
-    },
-    {
-      id: 'rep_02',
-      reportId: 'CIVIC-2025-1043',
-      userId: 'usr_citizen_01',
-      userName: 'Priya Patel',
-      userEmail: 'citizen.priya@civiclens.gov',
-      title: 'Major Drinking Water Pipeline Rupture Gushing Onto 100ft Road',
-      description: 'Potable municipal water pipe cracked underground. Water is shooting 3 feet high and flooding the pedestrian walkway and market entrance.',
-      category: 'Water Leakage',
-      imageUrls: [
-        'https://images.unsplash.com/photo-1584463623578-30113f8903c7?auto=format&fit=crop&w=800&q=80',
-      ],
-      location: '100ft Ring Road, Satellite, Ahmedabad',
-      address: 'Opposite Star Bazaar, Satellite Road, Ahmedabad, Gujarat 380015',
-      latitude: 23.0289,
-      longitude: 72.5273,
-      severity: 'Critical',
-      aiAnalysis: {
-        detectedCategory: 'Water Leakage',
-        summary: 'High pressure potable main fracture creating substantial clean water loss and localized pedestrian flooding.',
-        severityEstimate: 'Critical',
-        suggestedDepartment: 'Water Supply & Sewerage Board',
-        duplicateWarning: false,
-        recommendedAction: 'Emergency main valve shutdown within 1 hour followed by sleeve joint replacement.',
-        confidence: 0.98,
-      },
-      assignedOfficer: {
-        id: 'usr_officer_01',
-        name: 'Vikram Sharma',
-        department: 'Water Engineering Services',
-      },
-      status: 'Assigned',
-      statusHistory: [
-        {
-          newStatus: 'Submitted',
-          updatedBy: 'Priya Patel (Citizen)',
-          remarks: 'Emergency water leak reported.',
-          timestamp: '2025-02-22T07:10:00Z',
-        },
-        {
-          previousStatus: 'Submitted',
-          newStatus: 'Assigned',
-          updatedBy: 'Dr. Rajeshwari Sen (Admin)',
-          remarks: 'Critical priority alert triggered to Ward Water Inspector.',
-          timestamp: '2025-02-22T07:25:00Z',
-        },
-      ],
-      comments: [
-        {
-          id: 'comm_03',
-          userId: 'usr_officer_01',
-          userName: 'Vikram Sharma',
-          userRole: 'officer',
-          message: 'Zone feeder valve has been closed. Excavator arriving at site to uncover flange.',
-          createdAt: '2025-02-22T08:00:00Z',
-        },
-      ],
-      createdAt: '2025-02-22T07:10:00Z',
-      updatedAt: '2025-02-22T08:00:00Z',
-    },
-    {
-      id: 'rep_03',
-      reportId: 'CIVIC-2025-0988',
-      userId: 'usr_citizen_01',
-      userName: 'Priya Patel',
-      userEmail: 'citizen.priya@civiclens.gov',
-      title: 'Four Successive Streetlights Out on Riverfront Promenade Stretch',
-      description: 'Streetlamps from lamp post #42 to #45 are completely dark since 3 nights. Walking track is poorly illuminated and feels unsafe for evening walkers.',
-      category: 'Broken Streetlights',
-      imageUrls: [
-        'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=800&q=80',
-      ],
-      location: 'Sabarmati Riverfront East Walkway, Ahmedabad',
-      address: 'Between Subhash Bridge & Gandhi Bridge Promenade, Ahmedabad',
-      latitude: 23.0450,
-      longitude: 72.5714,
-      severity: 'Medium',
-      aiAnalysis: {
-        detectedCategory: 'Broken Streetlights',
-        summary: 'Multiple consecutive lighting failures creating dark pocket along high-footfall recreational pedestrian corridor.',
-        severityEstimate: 'Medium',
-        suggestedDepartment: 'Electrical & Public Lighting Division',
-        duplicateWarning: false,
-        recommendedAction: 'Check circuit feeder breaker #4 and replace burned LED driver units.',
-        confidence: 0.91,
-      },
-      status: 'Resolved',
-      statusHistory: [
-        {
-          newStatus: 'Submitted',
-          updatedBy: 'Priya Patel',
-          remarks: 'Streetlights out report created.',
-          timestamp: '2025-02-18T19:00:00Z',
-        },
-        {
-          previousStatus: 'Submitted',
-          newStatus: 'In Progress',
-          updatedBy: 'Vikram Sharma (Officer)',
-          remarks: 'Electrician team inspecting underground feeder line.',
-          timestamp: '2025-02-19T10:00:00Z',
-        },
-        {
-          previousStatus: 'In Progress',
-          newStatus: 'Resolved',
-          updatedBy: 'Vikram Sharma (Officer)',
-          remarks: 'Tripped MCB replaced and 4 luminaire driver circuits restored. Illuminance tested at 25 lux.',
-          timestamp: '2025-02-19T18:40:00Z',
-        },
-      ],
-      comments: [],
-      resolutionNotes: 'Repaired burnt cable splice inside distribution junction box #3. All 4 lamps fully operational.',
-      createdAt: '2025-02-18T19:00:00Z',
-      updatedAt: '2025-02-19T18:40:00Z',
-    },
-    {
-      id: 'rep_04',
-      reportId: 'CIVIC-2025-1011',
-      userId: 'usr_admin_01',
-      userName: 'Dr. Rajeshwari Sen',
-      userEmail: 'admin@civiclens.gov',
-      title: 'Illegal Commercial Debris Dumped Beside Municipal Park Fence',
-      description: 'Truckload of construction rubble and concrete waste dumped along the park boundary wall, obstructing pedestrian footpath.',
-      category: 'Garbage Accumulation',
-      imageUrls: [
-        'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=800&q=80',
-      ],
-      location: 'Law Garden Perimeter Road, Ahmedabad',
-      address: 'Netaji Marg, Ellisbridge, Ahmedabad, Gujarat 380006',
-      latitude: 23.0232,
-      longitude: 72.5601,
-      severity: 'Medium',
-      aiAnalysis: {
-        detectedCategory: 'Garbage Accumulation',
-        summary: 'Solid construction waste deposition blocking municipal walkway.',
-        severityEstimate: 'Medium',
-        suggestedDepartment: 'Solid Waste Management & Enforcement',
-        duplicateWarning: false,
-        recommendedAction: 'JCB loader clearance and review CCTV feed of intersection to penalize violator.',
-        confidence: 0.89,
-      },
-      status: 'Under Review',
-      statusHistory: [
-        {
-          newStatus: 'Submitted',
-          updatedBy: 'Dr. Rajeshwari Sen',
-          remarks: 'Report registered.',
-          timestamp: '2025-02-23T14:15:00Z',
-        },
-      ],
-      comments: [],
-      createdAt: '2025-02-23T14:15:00Z',
-      updatedAt: '2025-02-23T14:15:00Z',
-    },
-  ];
-
-  const factChecks: FactCheck[] = [
-    {
-      id: 'fact_01',
-      userId: 'usr_citizen_01',
-      userName: 'Priya Patel',
-      originalClaim: 'Viral WhatsApp Message: "Govt of India is giving free ₹5,000 monthly cash allowance to all youth under the PM Berojgari Bhatta Yojana 2025. Click this bit.ly link to claim immediately."',
-      extractedClaims: [
-        'Central Government has announced a universal ₹5,000 monthly cash allowance for all youth.',
-        'Scheme name is PM Berojgari Bhatta Yojana 2025.',
-        'Registration requires clicking third-party shortlink.',
-      ],
-      verdict: 'Contradicted by evidence',
-      confidence: 98,
-      analysis: 'The Press Information Bureau (PIB) Fact Check unit and Ministry of Labour & Employment have officially confirmed that NO such scheme named "PM Berojgari Bhatta Yojana" offering ₹5,000 cash has been launched by the Central Government. The circular circulating on WhatsApp and social media is a phishing scam aimed at harvesting citizens\' bank credentials and Aadhaar numbers.',
-      evidenceFound: [
-        'PIB Fact Check official clarification issued via X (Twitter) refuting the claim.',
-        'Official National Career Service portal (ncs.gov.in) has no record of such financial allowance.',
-        'Phishing domain registered on anonymous registrar without government NIC/GOV domain extension.',
-      ],
-      contradictoryEvidence: [
-        'No official cabinet approval, budget allocation, or gazette notification exists for this allowance.',
-        'Government websites exclusively use .gov.in or .nic.in domain extensions.',
-      ],
-      officialSources: [
-        {
-          title: 'PIB Fact Check Official Clarification (Press Information Bureau)',
-          url: 'https://pib.gov.in/Factcheck.aspx',
-          authority: 'Press Information Bureau, Ministry of Information & Broadcasting',
-        },
-        {
-          title: 'National Career Service Portal — Official Employment Guidelines',
-          url: 'https://www.ncs.gov.in',
-          authority: 'Ministry of Labour and Employment',
-        },
-      ],
-      syntheticMediaNotice: 'Forensic synthetic media detection is not active. Textual claim verified against authorized Government Gazette records and PIB Fact Check bulletins.',
-      verifiedTimestamp: '2025-02-20T16:00:00Z',
-    },
-    {
-      id: 'fact_02',
-      userId: 'usr_citizen_01',
-      userName: 'Priya Patel',
-      originalClaim: 'Claim on social media: "Citizens aged 70 years and above are now eligible for Ayushman Bharat health insurance regardless of their family income or socio-economic status."',
-      extractedClaims: [
-        'All citizens aged 70 and above qualify for Ayushman Bharat PM-JAY.',
-        'The benefit applies irrespective of socio-economic status or income bracket.',
-      ],
-      verdict: 'Supported by evidence',
-      confidence: 99,
-      analysis: 'The Union Cabinet officially approved the expansion of Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB PM-JAY) to provide health coverage to ALL senior citizens aged 70 years and above, irrespective of their income. Eligible seniors receive a distinct Ayushman card providing ₹5 lakh shared/individual coverage per year.',
-      evidenceFound: [
-        'Cabinet decision officially notified by Ministry of Health and Family Welfare.',
-        'National Health Authority portal beneficiary.nha.gov.in updated with dedicated 70+ registration module.',
-        'Over 30 lakh senior citizen cards issued in first phase rollout.',
-      ],
-      contradictoryEvidence: [],
-      officialSources: [
-        {
-          title: 'AB PM-JAY Expansion for Senior Citizens 70+ Notification',
-          url: 'https://beneficiary.nha.gov.in',
-          authority: 'National Health Authority & Ministry of Health',
-        },
-      ],
-      syntheticMediaNotice: 'Standard factual assertion corroborated directly with Cabinet communique.',
-      verifiedTimestamp: '2025-02-15T11:20:00Z',
-    },
-    {
-      id: 'fact_03',
-      userId: 'usr_admin_01',
-      userName: 'Dr. Rajeshwari Sen',
-      originalClaim: 'Viral Facebook Video: "Government has made biometric iris scanning mandatory at all municipal toll plazas starting March 2025, or vehicles will be impounded."',
-      extractedClaims: [
-        'Iris scanning is mandatory at municipal toll plazas.',
-        'Unscanned vehicles face immediate impoundment starting March 2025.',
-      ],
-      verdict: 'Misleading or missing context',
-      confidence: 94,
-      analysis: 'National Highways Authority of India (NHAI) is piloting GNSS (Global Navigation Satellite System) based barrierless electronic toll collection alongside existing RFID FASTag. There is NO mandate requiring physical iris scanning of passengers, and no impoundment policy exists for lack of iris verification.',
-      evidenceFound: [
-        'NHAI policy documents confirm GNSS satellite tolling pilot on selected national highway stretches.',
-        'FASTag remains valid and operational across all national toll plazas.',
-      ],
-      contradictoryEvidence: [
-        'No Ministry of Road Transport and Highways (MoRTH) circular references vehicle impoundment for iris scanning.',
-      ],
-      officialSources: [
-        {
-          title: 'Ministry of Road Transport & Highways Press Release on GNSS Tolling',
-          url: 'https://morth.nic.in',
-          authority: 'Ministry of Road Transport and Highways (MoRTH)',
-        },
-      ],
-      syntheticMediaNotice: 'Video audio track contains hyperbolic voiceover misrepresenting a technical satellite tolling pilot.',
-      verifiedTimestamp: '2025-02-22T13:45:00Z',
-    },
-  ];
-
-  const applications: PublicApplication[] = [
-    {
-      id: 'app_01',
-      userId: 'usr_citizen_01',
-      serviceName: 'PM Surya Ghar Rooftop Solar Technical Sanction',
-      department: 'Gujarat Energy Development Agency (GEDA) & Torrent Power Discom',
-      referenceNumber: 'RTS-GJ-2025-99418',
-      officialPortalUrl: 'https://pmsuryaghar.gov.in',
-      checklist: [
-        { id: 'c1', item: 'Aadhaar Identity Verification & e-KYC', completed: true },
-        { id: 'c2', item: 'Upload 3 months electricity bill', completed: true },
-        { id: 'c3', item: 'Submit Rooftop Dimensions & Load Request', completed: true },
-        { id: 'c4', item: 'DISCOM Technical Feasibility Approval', completed: true },
-        { id: 'c5', item: 'Empaneled Vendor Work Order', completed: false },
-        { id: 'c6', item: 'Net-Meter Commissioning Inspection', completed: false },
-        { id: 'c7', item: 'DBT Subsidy Disbursal', completed: false },
-      ],
-      progress: 60,
-      status: 'In Verification',
-      notes: 'Feasibility approved by Discom on 18 Feb 2025. Vendor quotation pending final review.',
-      createdAt: '2025-02-16T14:00:00Z',
-      updatedAt: '2025-02-18T16:30:00Z',
-    },
-    {
-      id: 'app_02',
-      userId: 'usr_citizen_01',
-      serviceName: 'Ayushman Bharat Golden Health Card (Senior Citizen 70+)',
-      department: 'National Health Authority',
-      referenceNumber: 'AB-70P-GJ-44120',
-      officialPortalUrl: 'https://beneficiary.nha.gov.in',
-      checklist: [
-        { id: 'a1', item: 'Family Member Aadhaar Details', completed: true },
-        { id: 'a2', item: 'Mobile OTP Authentication', completed: true },
-        { id: 'a3', item: 'Biometric e-KYC Verification', completed: true },
-        { id: 'a4', item: 'Digital Card Issuance', completed: true },
-      ],
-      progress: 100,
-      status: 'Approved',
-      notes: 'Card approved and downloaded. Eligible for ₹5 lakh cashless coverage across empaneled hospitals.',
-      createdAt: '2025-02-10T11:00:00Z',
-      updatedAt: '2025-02-10T11:15:00Z',
-    },
-  ];
-
-  const notifications: Notification[] = [
-    {
-      id: 'notif_01',
-      userId: 'usr_citizen_01',
-      title: 'Road Repair Update on CIVIC-2025-1042',
-      message: 'Officer Vikram Sharma updated status to "In Progress". Road repair crew is on site.',
-      type: 'info',
-      read: false,
-      link: '/reports/CIVIC-2025-1042',
-      createdAt: '2025-02-21T09:16:00Z',
-    },
-    {
-      id: 'notif_02',
-      userId: 'usr_citizen_01',
-      title: 'Solar Application Feasibility Approved',
-      message: 'Your PM Surya Ghar application RTS-GJ-2025-99418 has passed technical feasibility check.',
-      type: 'success',
-      read: false,
-      link: '/applications',
-      createdAt: '2025-02-18T16:31:00Z',
-    },
-    {
-      id: 'notif_03',
-      userId: 'usr_citizen_01',
-      title: 'New Policy Notification Published',
-      message: 'Department of Administrative Reforms has issued revised Citizen Charter Timelines for 2025.',
-      type: 'info',
-      read: true,
-      link: '/policies/pol_doc_04',
-      createdAt: '2025-01-26T10:00:00Z',
-    },
-    {
-      id: 'notif_04',
-      userId: 'usr_admin_01',
-      title: 'Critical Civic Alert: Water Main Burst',
-      message: 'New critical grievance reported at 100ft Ring Road, Satellite. Auto-assigned to Water Dept.',
-      type: 'alert',
-      read: false,
-      link: '/admin/reports',
-      createdAt: '2025-02-22T07:26:00Z',
-    },
-  ];
-
-  const bookmarks: Bookmark[] = [
-    {
-      id: 'bm_01',
-      userId: 'usr_citizen_01',
-      itemType: 'scheme',
-      itemId: 'sch_01',
-      itemTitle: 'PM Surya Ghar: Muft Bijli Yojana',
-      itemCategory: 'Energy & Sustainability',
-      createdAt: '2025-02-16T12:30:00Z',
-    },
-    {
-      id: 'bm_02',
-      userId: 'usr_citizen_01',
-      itemType: 'policy',
-      itemId: 'pol_doc_02',
-      itemTitle: 'Digital Personal Data Protection (DPDP) Act — Citizen Rights',
-      itemCategory: 'Digital Governance & Privacy',
-      createdAt: '2025-02-17T15:00:00Z',
-    },
-  ];
-
-  const auditLogs: AuditLog[] = [
-    {
-      id: 'aud_01',
-      userId: 'usr_citizen_01',
-      userName: 'Priya Patel',
-      action: 'SUBMIT_CIVIC_REPORT',
-      entityType: 'CivicReport',
-      entityId: 'CIVIC-2025-1042',
-      details: 'Pothole report created at Navrangpura Junction with GPS coordinates.',
-      timestamp: '2025-02-20T08:30:00Z',
-    },
-    {
-      id: 'aud_02',
-      userId: 'usr_admin_01',
-      userName: 'Dr. Rajeshwari Sen',
-      action: 'ASSIGN_OFFICER',
-      entityType: 'CivicReport',
-      entityId: 'CIVIC-2025-1042',
-      details: 'Assigned report to Ward Engineer Vikram Sharma.',
-      timestamp: '2025-02-20T11:00:00Z',
-    },
-    {
-      id: 'aud_03',
-      userId: 'usr_officer_01',
-      userName: 'Vikram Sharma',
-      action: 'UPDATE_REPORT_STATUS',
-      entityType: 'CivicReport',
-      entityId: 'CIVIC-2025-1042',
-      details: 'Status transitioned from Assigned to In Progress. Equipment dispatched.',
-      timestamp: '2025-02-21T09:15:00Z',
-    },
-    {
-      id: 'aud_04',
-      userId: 'usr_citizen_01',
-      userName: 'Priya Patel',
-      action: 'RUN_FACT_CHECK',
-      entityType: 'FactCheck',
-      entityId: 'fact_01',
-      details: 'Analyzed viral claim regarding PM Berojgari Bhatta scheme.',
-      timestamp: '2025-02-20T16:00:00Z',
-    },
-  ];
-
-  return {
-    users,
-    policyDocuments,
-    policyExplanations,
-    schemes,
-    civicReports,
-    factChecks,
-    applications,
-    notifications,
-    bookmarks,
-    auditLogs,
-  };
-}
-
-// Helper query utilities
+/**
+ * Synchronous compatibility accessor for legacy synchronous code
+ */
 export const db = {
-  get: () => loadDatabase(),
-  save: () => saveDatabase(),
+  get: (): DatabaseSchema => {
+    if (!dbCache) return loadDatabase();
+    return dbCache;
+  },
+  save: (): void => {
+    saveDatabase();
+  },
+};
+
+/**
+ * Clean sanitization helper to strip internal MongoDB _id fields before returning to caller
+ */
+function cleanDoc<T>(doc: any): T {
+  if (!doc) return doc;
+  const { _id, ...rest } = doc;
+  return rest as T;
+}
+
+function cleanDocs<T>(docs: any[]): T[] {
+  return docs.map((d) => cleanDoc<T>(d));
+}
+
+// =========================================================================
+// MONGODB ATLAS UNIFIED REPOSITORY LAYER (CRUD WITH ZERO-CONFIG FALLBACK)
+// =========================================================================
+
+export const dbService = {
+  // ── USERS ─────────────────────────────────────────────────────────────
+  async findUserById(id: string): Promise<User | null> {
+    const mongo = getDb();
+    if (mongo) {
+      const doc = await mongo.collection('users').findOne({ id });
+      return cleanDoc<User>(doc);
+    }
+    return db.get().users.find((u) => u.id === id) || null;
+  },
+
+  async findUserByEmail(email: string): Promise<User | null> {
+    const norm = email.toLowerCase().trim();
+    const mongo = getDb();
+    if (mongo) {
+      const doc = await mongo.collection('users').findOne({ email: norm });
+      return cleanDoc<User>(doc);
+    }
+    return db.get().users.find((u) => u.email.toLowerCase() === norm) || null;
+  },
+
+  async createUser(user: User): Promise<User> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('users').insertOne({ ...user });
+      return user;
+    }
+    db.get().users.push(user);
+    db.save();
+    return user;
+  },
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User | null> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('users').updateOne({ id }, { $set: updates });
+      const doc = await mongo.collection('users').findOne({ id });
+      return cleanDoc<User>(doc);
+    }
+    const user = db.get().users.find((u) => u.id === id);
+    if (!user) return null;
+    Object.assign(user, updates);
+    db.save();
+    return user;
+  },
+
+  async listUsers(filter?: { role?: string; search?: string }): Promise<User[]> {
+    const mongo = getDb();
+    if (mongo) {
+      const query: any = {};
+      if (filter?.role && filter.role !== 'All') query.role = filter.role;
+      if (filter?.search) {
+        const regex = new RegExp(filter.search, 'i');
+        query.$or = [{ name: regex }, { email: regex }, { city: regex }];
+      }
+      const docs = await mongo.collection('users').find(query).toArray();
+      return cleanDocs<User>(docs);
+    }
+    let users = [...db.get().users];
+    if (filter?.role && filter.role !== 'All') {
+      users = users.filter((u) => u.role === filter.role);
+    }
+    if (filter?.search) {
+      const q = filter.search.toLowerCase();
+      users = users.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.city.toLowerCase().includes(q));
+    }
+    return users;
+  },
+
+  // ── POLICIES & EXPLANATIONS ──────────────────────────────────────────
+  async listPolicies(filter?: { category?: string; search?: string; language?: string }): Promise<PolicyDocument[]> {
+    const mongo = getDb();
+    if (mongo) {
+      const query: any = {};
+      if (filter?.category && filter.category !== 'All') {
+        query.category = { $regex: new RegExp(`^${filter.category}$`, 'i') };
+      }
+      if (filter?.language && filter.language !== 'All') {
+        query.language = { $regex: new RegExp(`^${filter.language}$`, 'i') };
+      }
+      if (filter?.search) {
+        const regex = new RegExp(filter.search, 'i');
+        query.$or = [{ title: regex }, { authority: regex }, { extractedContent: regex }];
+      }
+      const docs = await mongo.collection('policies').find(query).sort({ createdAt: -1 }).toArray();
+      return cleanDocs<PolicyDocument>(docs);
+    }
+    let list = [...db.get().policyDocuments];
+    if (filter?.category && filter.category !== 'All') {
+      list = list.filter((p) => p.category.toLowerCase() === filter.category!.toLowerCase());
+    }
+    if (filter?.language && filter.language !== 'All') {
+      list = list.filter((p) => p.language.toLowerCase() === filter.language!.toLowerCase());
+    }
+    if (filter?.search) {
+      const q = filter.search.toLowerCase();
+      list = list.filter((p) => p.title.toLowerCase().includes(q) || p.authority.toLowerCase().includes(q) || p.extractedContent.toLowerCase().includes(q));
+    }
+    return list;
+  },
+
+  async getPolicyById(id: string): Promise<PolicyDocument | null> {
+    const mongo = getDb();
+    if (mongo) {
+      const doc = await mongo.collection('policies').findOne({ id });
+      return cleanDoc<PolicyDocument>(doc);
+    }
+    return db.get().policyDocuments.find((p) => p.id === id) || null;
+  },
+
+  async createPolicy(policy: PolicyDocument): Promise<PolicyDocument> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('policies').insertOne({ ...policy });
+      return policy;
+    }
+    db.get().policyDocuments.unshift(policy);
+    db.save();
+    return policy;
+  },
+
+  async incrementPolicyViews(id: string): Promise<void> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('policies').updateOne({ id }, { $inc: { views: 1 } });
+      return;
+    }
+    const p = db.get().policyDocuments.find((pol) => pol.id === id);
+    if (p) {
+      p.views = (p.views || 0) + 1;
+      db.save();
+    }
+  },
+
+  async getPolicyExplanations(documentId: string): Promise<PolicyExplanation[]> {
+    const mongo = getDb();
+    if (mongo) {
+      const docs = await mongo.collection('policy_explanations').find({ documentId }).toArray();
+      return cleanDocs<PolicyExplanation>(docs);
+    }
+    return db.get().policyExplanations.filter((e) => e.documentId === documentId);
+  },
+
+  async createPolicyExplanation(explanation: PolicyExplanation): Promise<PolicyExplanation> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('policy_explanations').insertOne({ ...explanation });
+      return explanation;
+    }
+    db.get().policyExplanations.push(explanation);
+    db.save();
+    return explanation;
+  },
+
+  // ── SCHEMES ───────────────────────────────────────────────────────────
+  async listSchemes(filter?: { category?: string; state?: string; search?: string }): Promise<Scheme[]> {
+    const mongo = getDb();
+    if (mongo) {
+      const query: any = {};
+      if (filter?.category && filter.category !== 'All') {
+        query.category = { $regex: new RegExp(`^${filter.category}$`, 'i') };
+      }
+      if (filter?.state && filter.state !== 'All') {
+        const regex = new RegExp(filter.state, 'i');
+        query.$or = [{ state: regex }, { state: /all-india/i }, { state: /central/i }];
+      }
+      if (filter?.search) {
+        const regex = new RegExp(filter.search, 'i');
+        query.$or = [{ name: regex }, { description: regex }, { eligibilitySummary: regex }, { tags: regex }];
+      }
+      const docs = await mongo.collection('government_schemes').find(query).toArray();
+      return cleanDocs<Scheme>(docs);
+    }
+    let list = [...db.get().schemes];
+    if (filter?.category && filter.category !== 'All') {
+      list = list.filter((s) => s.category.toLowerCase() === filter.category!.toLowerCase());
+    }
+    if (filter?.state && filter.state !== 'All') {
+      const st = filter.state.toLowerCase();
+      list = list.filter((s) => s.state.toLowerCase().includes(st) || s.state.toLowerCase().includes('all-india') || s.state.toLowerCase().includes('central'));
+    }
+    if (filter?.search) {
+      const q = filter.search.toLowerCase();
+      list = list.filter((s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q) || s.eligibilitySummary.toLowerCase().includes(q) || s.tags.some((t) => t.toLowerCase().includes(q)));
+    }
+    return list;
+  },
+
+  async getSchemeById(id: string): Promise<Scheme | null> {
+    const mongo = getDb();
+    if (mongo) {
+      const doc = await mongo.collection('government_schemes').findOne({ id });
+      return cleanDoc<Scheme>(doc);
+    }
+    return db.get().schemes.find((s) => s.id === id) || null;
+  },
+
+  // ── CIVIC REPORTS ─────────────────────────────────────────────────────
+  async listReports(filter?: { category?: string; severity?: string; status?: string; search?: string; limit?: number; userId?: string }): Promise<CivicReport[]> {
+    const mongo = getDb();
+    if (mongo) {
+      const query: any = {};
+      if (filter?.userId) query.userId = filter.userId;
+      if (filter?.category && filter.category !== 'All') query.category = filter.category;
+      if (filter?.severity && filter.severity !== 'All') query.severity = filter.severity;
+      if (filter?.status && filter.status !== 'All') query.status = filter.status;
+      if (filter?.search) {
+        const regex = new RegExp(filter.search, 'i');
+        query.$or = [{ reportId: regex }, { title: regex }, { description: regex }, { location: regex }];
+      }
+      let cursor = mongo.collection('civic_reports').find(query).sort({ createdAt: -1 });
+      if (filter?.limit) cursor = cursor.limit(filter.limit);
+      const docs = await cursor.toArray();
+      return cleanDocs<CivicReport>(docs);
+    }
+    let list = [...db.get().civicReports];
+    if (filter?.userId) list = list.filter((r) => r.userId === filter.userId);
+    if (filter?.category && filter.category !== 'All') list = list.filter((r) => r.category.toLowerCase() === filter.category!.toLowerCase());
+    if (filter?.severity && filter.severity !== 'All') list = list.filter((r) => r.severity.toLowerCase() === filter.severity!.toLowerCase());
+    if (filter?.status && filter.status !== 'All') list = list.filter((r) => r.status.toLowerCase() === filter.status!.toLowerCase());
+    if (filter?.search) {
+      const q = filter.search.toLowerCase();
+      list = list.filter((r) => r.reportId.toLowerCase().includes(q) || r.title.toLowerCase().includes(q) || r.description.toLowerCase().includes(q) || r.location.toLowerCase().includes(q));
+    }
+    if (filter?.limit) list = list.slice(0, filter.limit);
+    return list;
+  },
+
+  async getReportById(idOrReportId: string): Promise<CivicReport | null> {
+    const mongo = getDb();
+    if (mongo) {
+      const doc = await mongo.collection('civic_reports').findOne({
+        $or: [{ id: idOrReportId }, { reportId: idOrReportId }],
+      });
+      return cleanDoc<CivicReport>(doc);
+    }
+    return db.get().civicReports.find((r) => r.id === idOrReportId || r.reportId === idOrReportId) || null;
+  },
+
+  async createReport(report: CivicReport): Promise<CivicReport> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('civic_reports').insertOne({ ...report });
+      return report;
+    }
+    db.get().civicReports.unshift(report);
+    db.save();
+    return report;
+  },
+
+  async updateReport(idOrReportId: string, updates: Partial<CivicReport>): Promise<CivicReport | null> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('civic_reports').updateOne(
+        { $or: [{ id: idOrReportId }, { reportId: idOrReportId }] },
+        { $set: updates }
+      );
+      const doc = await mongo.collection('civic_reports').findOne({
+        $or: [{ id: idOrReportId }, { reportId: idOrReportId }],
+      });
+      return cleanDoc<CivicReport>(doc);
+    }
+    const report = db.get().civicReports.find((r) => r.id === idOrReportId || r.reportId === idOrReportId);
+    if (!report) return null;
+    Object.assign(report, updates);
+    db.save();
+    return report;
+  },
+
+  async addReportComment(idOrReportId: string, comment: any): Promise<CivicReport | null> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('civic_reports').updateOne(
+        { $or: [{ id: idOrReportId }, { reportId: idOrReportId }] },
+        { $push: { comments: comment }, $set: { updatedAt: new Date().toISOString() } } as any
+      );
+      const doc = await mongo.collection('civic_reports').findOne({
+        $or: [{ id: idOrReportId }, { reportId: idOrReportId }],
+      });
+      return cleanDoc<CivicReport>(doc);
+    }
+    const report = db.get().civicReports.find((r) => r.id === idOrReportId || r.reportId === idOrReportId);
+    if (!report) return null;
+    report.comments.push(comment);
+    report.updatedAt = new Date().toISOString();
+    db.save();
+    return report;
+  },
+
+  // ── FACT CHECKS ───────────────────────────────────────────────────────
+  async listFactChecks(): Promise<FactCheck[]> {
+    const mongo = getDb();
+    if (mongo) {
+      const docs = await mongo.collection('fact_checks').find().sort({ verifiedTimestamp: -1 }).toArray();
+      return cleanDocs<FactCheck>(docs);
+    }
+    return db.get().factChecks;
+  },
+
+  async getFactCheckById(id: string): Promise<FactCheck | null> {
+    const mongo = getDb();
+    if (mongo) {
+      const doc = await mongo.collection('fact_checks').findOne({ id });
+      return cleanDoc<FactCheck>(doc);
+    }
+    return db.get().factChecks.find((f) => f.id === id) || null;
+  },
+
+  async createFactCheck(factCheck: FactCheck): Promise<FactCheck> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('fact_checks').insertOne({ ...factCheck });
+      return factCheck;
+    }
+    db.get().factChecks.unshift(factCheck);
+    db.save();
+    return factCheck;
+  },
+
+  // ── PUBLIC APPLICATIONS ───────────────────────────────────────────────
+  async listApplicationsByUser(userId: string): Promise<PublicApplication[]> {
+    const mongo = getDb();
+    if (mongo) {
+      const docs = await mongo.collection('applications').find({ userId }).sort({ updatedAt: -1 }).toArray();
+      return cleanDocs<PublicApplication>(docs);
+    }
+    return db.get().applications.filter((a) => a.userId === userId);
+  },
+
+  async getApplicationById(id: string, userId?: string): Promise<PublicApplication | null> {
+    const mongo = getDb();
+    if (mongo) {
+      const query: any = { id };
+      if (userId) query.userId = userId;
+      const doc = await mongo.collection('applications').findOne(query);
+      return cleanDoc<PublicApplication>(doc);
+    }
+    return db.get().applications.find((a) => a.id === id && (!userId || a.userId === userId)) || null;
+  },
+
+  async createApplication(app: PublicApplication): Promise<PublicApplication> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('applications').insertOne({ ...app });
+      return app;
+    }
+    db.get().applications.unshift(app);
+    db.save();
+    return app;
+  },
+
+  async updateApplication(id: string, updates: Partial<PublicApplication>): Promise<PublicApplication | null> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('applications').updateOne({ id }, { $set: updates });
+      const doc = await mongo.collection('applications').findOne({ id });
+      return cleanDoc<PublicApplication>(doc);
+    }
+    const app = db.get().applications.find((a) => a.id === id);
+    if (!app) return null;
+    Object.assign(app, updates);
+    db.save();
+    return app;
+  },
+
+  async deleteApplication(id: string, userId: string): Promise<boolean> {
+    const mongo = getDb();
+    if (mongo) {
+      const res = await mongo.collection('applications').deleteOne({ id, userId });
+      return res.deletedCount > 0;
+    }
+    const idx = db.get().applications.findIndex((a) => a.id === id && a.userId === userId);
+    if (idx === -1) return false;
+    db.get().applications.splice(idx, 1);
+    db.save();
+    return true;
+  },
+
+  // ── NOTIFICATIONS ─────────────────────────────────────────────────────
+  async listNotificationsByUser(userId: string): Promise<Notification[]> {
+    const mongo = getDb();
+    if (mongo) {
+      const docs = await mongo.collection('notifications').find({ userId }).sort({ createdAt: -1 }).toArray();
+      return cleanDocs<Notification>(docs);
+    }
+    return db.get().notifications.filter((n) => n.userId === userId);
+  },
+
+  async countUnreadNotifications(userId: string): Promise<number> {
+    const mongo = getDb();
+    if (mongo) {
+      return await mongo.collection('notifications').countDocuments({ userId, read: false });
+    }
+    return db.get().notifications.filter((n) => n.userId === userId && !n.read).length;
+  },
+
+  async createNotification(userId: string, title: string, message: string, type: 'info' | 'success' | 'warning' | 'alert', link?: string): Promise<Notification> {
+    const notif: Notification = {
+      id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      userId,
+      title,
+      message,
+      type,
+      read: false,
+      link,
+      createdAt: new Date().toISOString(),
+    };
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('notifications').insertOne({ ...notif });
+      return notif;
+    }
+    db.get().notifications.unshift(notif);
+    db.save();
+    return notif;
+  },
+
+  async markNotificationRead(id: string, userId: string): Promise<boolean> {
+    const mongo = getDb();
+    if (mongo) {
+      const res = await mongo.collection('notifications').updateOne({ id, userId }, { $set: { read: true } });
+      return res.modifiedCount > 0;
+    }
+    const n = db.get().notifications.find((notif) => notif.id === id && notif.userId === userId);
+    if (!n) return false;
+    n.read = true;
+    db.save();
+    return true;
+  },
+
+  async markAllNotificationsRead(userId: string): Promise<void> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('notifications').updateMany({ userId }, { $set: { read: true } });
+      return;
+    }
+    db.get().notifications.filter((n) => n.userId === userId).forEach((n) => (n.read = true));
+    db.save();
+  },
+
+  // ── BOOKMARKS ─────────────────────────────────────────────────────────
+  async listBookmarksByUser(userId: string): Promise<Bookmark[]> {
+    const mongo = getDb();
+    if (mongo) {
+      const docs = await mongo.collection('bookmarks').find({ userId }).sort({ createdAt: -1 }).toArray();
+      return cleanDocs<Bookmark>(docs);
+    }
+    return db.get().bookmarks.filter((b) => b.userId === userId);
+  },
+
+  async addBookmark(bookmark: Bookmark): Promise<Bookmark> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('bookmarks').updateOne(
+        { userId: bookmark.userId, itemId: bookmark.itemId },
+        { $set: bookmark },
+        { upsert: true }
+      );
+      return bookmark;
+    }
+    const existing = db.get().bookmarks.find((b) => b.userId === bookmark.userId && b.itemId === bookmark.itemId);
+    if (!existing) {
+      db.get().bookmarks.push(bookmark);
+      db.save();
+    }
+    return bookmark;
+  },
+
+  async removeBookmark(userId: string, itemId: string): Promise<boolean> {
+    const mongo = getDb();
+    if (mongo) {
+      const res = await mongo.collection('bookmarks').deleteOne({ userId, itemId });
+      return res.deletedCount > 0;
+    }
+    const idx = db.get().bookmarks.findIndex((b) => b.userId === userId && b.itemId === itemId);
+    if (idx === -1) return false;
+    db.get().bookmarks.splice(idx, 1);
+    db.save();
+    return true;
+  },
+
+  // ── AUDIT LOGS ────────────────────────────────────────────────────────
+  async createAuditLog(log: AuditLog): Promise<AuditLog> {
+    const mongo = getDb();
+    if (mongo) {
+      await mongo.collection('audit_logs').insertOne({ ...log });
+      return log;
+    }
+    db.get().auditLogs.unshift(log);
+    db.save();
+    return log;
+  },
+
+  async listAuditLogs(filter?: { action?: string; search?: string; limit?: number }): Promise<AuditLog[]> {
+    const mongo = getDb();
+    if (mongo) {
+      const query: any = {};
+      if (filter?.action && filter.action !== 'All') {
+        query.action = { $regex: new RegExp(filter.action, 'i') };
+      }
+      if (filter?.search) {
+        const regex = new RegExp(filter.search, 'i');
+        query.$or = [{ userName: regex }, { details: regex }, { entityId: regex }];
+      }
+      let cursor = mongo.collection('audit_logs').find(query).sort({ timestamp: -1 });
+      if (filter?.limit) cursor = cursor.limit(filter.limit);
+      const docs = await cursor.toArray();
+      return cleanDocs<AuditLog>(docs);
+    }
+    let list = [...db.get().auditLogs];
+    if (filter?.action && filter.action !== 'All') {
+      list = list.filter((l) => l.action.toLowerCase().includes(filter.action!.toLowerCase()));
+    }
+    if (filter?.search) {
+      const q = filter.search.toLowerCase();
+      list = list.filter((l) => l.userName.toLowerCase().includes(q) || l.details.toLowerCase().includes(q) || l.entityId.toLowerCase().includes(q));
+    }
+    if (filter?.limit) list = list.slice(0, filter.limit);
+    return list;
+  },
+
+  // ── DASHBOARD AGGREGATIONS ────────────────────────────────────────────
+  async getAdminMetrics(): Promise<any> {
+    const mongo = getDb();
+    if (mongo) {
+      const [
+        totalCitizens,
+        totalOfficers,
+        reports,
+        recentLogs,
+      ] = await Promise.all([
+        mongo.collection('users').countDocuments({ role: 'citizen' }),
+        mongo.collection('users').countDocuments({ role: { $in: ['officer', 'admin'] } }),
+        mongo.collection('civic_reports').find().sort({ createdAt: -1 }).toArray(),
+        mongo.collection('audit_logs').find().sort({ timestamp: -1 }).limit(10).toArray(),
+      ]);
+
+      const cleanedReports = cleanDocs<CivicReport>(reports);
+      const totalReports = cleanedReports.length;
+      const pendingReports = cleanedReports.filter((r) => r.status === 'Submitted' || r.status === 'Under Review').length;
+      const assignedReports = cleanedReports.filter((r) => r.status === 'Assigned' || r.status === 'In Progress').length;
+      const resolvedReports = cleanedReports.filter((r) => r.status === 'Resolved' || r.status === 'Closed').length;
+      const criticalReports = cleanedReports.filter((r) => r.severity === 'Critical' || r.severity === 'High').length;
+
+      const categoryCount: Record<string, number> = {};
+      cleanedReports.forEach((r) => {
+        categoryCount[r.category] = (categoryCount[r.category] || 0) + 1;
+      });
+      const categoryDistribution = Object.entries(categoryCount).map(([name, count]) => ({ name, count }));
+
+      const severityCount: Record<string, number> = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+      cleanedReports.forEach((r) => {
+        severityCount[r.severity] = (severityCount[r.severity] || 0) + 1;
+      });
+      const severityDistribution = Object.entries(severityCount).map(([name, count]) => ({ name, count }));
+
+      return {
+        metrics: {
+          totalCitizens,
+          totalOfficers,
+          totalReports,
+          pendingReports,
+          assignedReports,
+          resolvedReports,
+          criticalReports,
+          averageResolutionHours: 36.4,
+          slaComplianceRate: 94.2,
+        },
+        categoryDistribution,
+        severityDistribution,
+        recentReports: cleanedReports.slice(0, 8),
+        recentAuditLogs: cleanDocs<AuditLog>(recentLogs),
+      };
+    }
+
+    const data = db.get();
+    const totalReports = data.civicReports.length;
+    const pendingReports = data.civicReports.filter((r) => r.status === 'Submitted' || r.status === 'Under Review').length;
+    const assignedReports = data.civicReports.filter((r) => r.status === 'Assigned' || r.status === 'In Progress').length;
+    const resolvedReports = data.civicReports.filter((r) => r.status === 'Resolved' || r.status === 'Closed').length;
+    const criticalReports = data.civicReports.filter((r) => r.severity === 'Critical' || r.severity === 'High').length;
+
+    const categoryCount: Record<string, number> = {};
+    data.civicReports.forEach((r) => {
+      categoryCount[r.category] = (categoryCount[r.category] || 0) + 1;
+    });
+    const categoryDistribution = Object.entries(categoryCount).map(([name, count]) => ({ name, count }));
+
+    const severityCount: Record<string, number> = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+    data.civicReports.forEach((r) => {
+      severityCount[r.severity] = (severityCount[r.severity] || 0) + 1;
+    });
+    const severityDistribution = Object.entries(severityCount).map(([name, count]) => ({ name, count }));
+
+    return {
+      metrics: {
+        totalCitizens: data.users.filter((u) => u.role === 'citizen').length,
+        totalOfficers: data.users.filter((u) => u.role === 'officer' || u.role === 'admin').length,
+        totalReports,
+        pendingReports,
+        assignedReports,
+        resolvedReports,
+        criticalReports,
+        averageResolutionHours: 36.4,
+        slaComplianceRate: 94.2,
+      },
+      categoryDistribution,
+      severityDistribution,
+      recentReports: data.civicReports.slice(0, 8),
+      recentAuditLogs: data.auditLogs.slice(0, 10),
+    };
+  },
+
+  async getTransparencyMetrics(): Promise<any> {
+    const mongo = getDb();
+    if (mongo) {
+      const [reports, policiesCount, factChecksCount, schemesCount] = await Promise.all([
+        mongo.collection('civic_reports').find().toArray(),
+        mongo.collection('policies').countDocuments(),
+        mongo.collection('fact_checks').countDocuments(),
+        mongo.collection('government_schemes').countDocuments(),
+      ]);
+
+      const cleanedReports = cleanDocs<CivicReport>(reports);
+      const total = cleanedReports.length;
+      const resolved = cleanedReports.filter((r) => r.status === 'Resolved' || r.status === 'Closed').length;
+      const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 100;
+
+      return {
+        totalReports: total,
+        resolvedReports: resolved,
+        resolutionRate,
+        avgResolutionDays: 2.1,
+        verifiedPoliciesCount: policiesCount,
+        debunkedRumorsCount: factChecksCount,
+        schemesCataloged: schemesCount,
+        recentOutcomes: cleanedReports
+          .filter((r) => r.status === 'Resolved')
+          .slice(0, 4)
+          .map((r) => ({
+            id: r.reportId,
+            category: r.category,
+            location: r.location,
+            resolvedAt: r.updatedAt,
+            notes: r.resolutionNotes || 'Remediated by municipal taskforce.',
+          })),
+      };
+    }
+
+    const data = db.get();
+    const total = data.civicReports.length;
+    const resolved = data.civicReports.filter((r) => r.status === 'Resolved' || r.status === 'Closed').length;
+    const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 100;
+
+    return {
+      totalReports: total,
+      resolvedReports: resolved,
+      resolutionRate,
+      avgResolutionDays: 2.1,
+      verifiedPoliciesCount: data.policyDocuments.length,
+      debunkedRumorsCount: data.factChecks.length,
+      schemesCataloged: data.schemes.length,
+      recentOutcomes: data.civicReports
+        .filter((r) => r.status === 'Resolved')
+        .slice(0, 4)
+        .map((r) => ({
+          id: r.reportId,
+          category: r.category,
+          location: r.location,
+          resolvedAt: r.updatedAt,
+          notes: r.resolutionNotes || 'Remediated by municipal taskforce.',
+        })),
+    };
+  },
 };

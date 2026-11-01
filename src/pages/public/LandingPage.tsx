@@ -7,7 +7,7 @@
  * - Colour-tint hover cards, stats bar, CTA banner
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -26,6 +26,11 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { useTheme } from '../../context/ThemeContext';
+import { HeroBackground } from '../../components/backgrounds/HeroBackground';
+import { InView } from '../../components/backgrounds/InView';
+
+// WebGL light waterfall (same effect family as Proofline); loaded only when scrolled into view
+const ZirconTorrent = lazy(() => import('../../components/backgrounds/ZirconTorrent'));
 
 /* ── Intersection-observer hook for scroll reveal ── */
 function useReveal(threshold = 0.15) {
@@ -168,8 +173,10 @@ export const LandingPage: React.FC = () => {
       {/* ══════════════════════════════════════════════════════
           HERO SECTION
           ══════════════════════════════════════════════════════ */}
+      <div className="relative overflow-hidden">
+        <HeroBackground isDark={isDark} />
       <section
-        className="relative flex flex-col items-start justify-center"
+        className="relative z-10 flex flex-col items-start justify-center"
         style={{
           minHeight: '100dvh',
           padding: 'clamp(100px,14vh,130px) clamp(16px,6vw,80px) clamp(40px,6vh,80px)',
@@ -208,7 +215,7 @@ export const LandingPage: React.FC = () => {
             <h1
               style={{
                 fontFamily: 'var(--font-sans)',
-                fontSize: 'clamp(36px, 5.8vw, 74px)',
+                fontSize: 'clamp(34px, 5vw, 64px)',
                 fontWeight: 700,
                 letterSpacing: '-0.04em',
                 lineHeight: 1.1,
@@ -530,6 +537,7 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
       </section>
+      </div>
 
       {/* ══════════════════════════════════════════════════════
           STATS BAR
@@ -729,6 +737,24 @@ export const LandingPage: React.FC = () => {
                 : '0 12px 40px -8px rgba(71,123,255,0.12)',
             }}
           >
+            {/* Animated light waterfall behind the final CTA (dark theme only) */}
+            {isDark && (
+              <>
+                <InView style={{ position: 'absolute', inset: 0, opacity: 0.6, pointerEvents: 'none' }}>
+                  <Suspense fallback={null}>
+                    <ZirconTorrent background="#000000" style={{ width: '100%', height: '100%' }} />
+                  </Suspense>
+                </InView>
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.7) 100%)',
+                    pointerEvents: 'none',
+                  }}
+                />
+              </>
+            )}
             {/* Orbs inside banner */}
             <div
               style={{

@@ -4,12 +4,17 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { db, User } from './db.js';
+import { dbService, User } from './db.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'civiclens_super_secure_jwt_token_key_2025';
+const JWT_SECRET = process.env.JWT_SECRET || 'civiclens_secure_jwt_token_key_2025_prod';
+
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.warn('[SECURITY WARNING] JWT_SECRET is not configured in production environment variables.');
+}
 
 export interface AuthRequest extends Request {
   user?: User;
+  file?: any;
 }
 
 export function generateToken(user: User): string {
@@ -25,7 +30,7 @@ export function generateToken(user: User): string {
   );
 }
 
-export function authenticate(req: AuthRequest, res: Response, next: NextFunction): void {
+export async function authenticate(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Authentication required. No token provided.' });
@@ -35,7 +40,7 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string };
-    const user = db.get().users.find((u) => u.id === decoded.id);
+    const user = await dbService.findUserById(decoded.id);
 
     if (!user) {
       res.status(401).json({ error: 'User account not found.' });
@@ -67,13 +72,13 @@ export function requireRole(...roles: Array<'citizen' | 'officer' | 'admin'>) {
   };
 }
 
-export function optionalAuthenticate(req: AuthRequest, res: Response, next: NextFunction): void {
+export async function optionalAuthenticate(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
-      const user = db.get().users.find((u) => u.id === decoded.id);
+      const user = await dbService.findUserById(decoded.id);
       if (user) {
         req.user = user;
       }

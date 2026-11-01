@@ -52,6 +52,20 @@
       "occupation": "",
       "category": "General",
       "createdAt": "2026-11-01T08:40:28.128Z"
+    },
+    {
+      "id": "usr_1793548528437_mecc5",
+      "name": "Attacker User",
+      "email": "test_1793548528352@civiclens.gov",
+      "passwordHash": "$2b$10$7k/.SS6DwJiPz9tEbq7kcuh/Hx4ZCUM9oIA8sMfvkUugsHsmwdi1C",
+      "phone": "",
+      "role": "citizen",
+      "state": "National / Other",
+      "city": "City",
+      "preferredLanguage": "English",
+      "occupation": "",
+      "category": "General",
+      "createdAt": "2026-11-01T15:55:28.437Z"
     }
   ],
   "policyDocuments": [
@@ -908,6 +922,24 @@
   ],
   "notifications": [
     {
+      "id": "notif_1793548528531_cm9a",
+      "userId": "usr_1793548528437_mecc5",
+      "title": "Security Alert: Password Changed",
+      "message": "Your account password was successfully updated.",
+      "type": "alert",
+      "read": false,
+      "createdAt": "2026-11-01T15:55:28.531Z"
+    },
+    {
+      "id": "notif_1793548528438_a6sq",
+      "userId": "usr_1793548528437_mecc5",
+      "title": "Welcome to CivicLens AI",
+      "message": "Your civic intelligence account is active. Explore policies, report local issues, or check scheme eligibility.",
+      "type": "success",
+      "read": false,
+      "createdAt": "2026-11-01T15:55:28.438Z"
+    },
+    {
       "id": "notif_1793522428148_n9frm",
       "userId": "usr_1793522428128_dh61u",
       "title": "Welcome to CivicLens AI",
@@ -978,6 +1010,56 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "aud_1793548567446_o61e4",
+      "userId": "usr_citizen_01",
+      "userName": "Priya Patel",
+      "action": "USER_LOGIN",
+      "entityType": "User",
+      "entityId": "usr_citizen_01",
+      "details": "User logged in from 127.0.0.1",
+      "timestamp": "2026-11-01T15:56:07.446Z"
+    },
+    {
+      "id": "aud_1793548528531_5en9p",
+      "userId": "usr_1793548528437_mecc5",
+      "userName": "Attacker User",
+      "action": "PASSWORD_RESET",
+      "entityType": "User",
+      "entityId": "usr_1793548528437_mecc5",
+      "details": "User password was reset with verified OTP code.",
+      "timestamp": "2026-11-01T15:55:28.531Z"
+    },
+    {
+      "id": "aud_1793548528442_lzttg",
+      "userId": "usr_1793548528437_mecc5",
+      "userName": "Attacker User",
+      "action": "REQUEST_PASSWORD_RESET",
+      "entityType": "User",
+      "entityId": "usr_1793548528437_mecc5",
+      "details": "Requested 6-digit reset code",
+      "timestamp": "2026-11-01T15:55:28.442Z"
+    },
+    {
+      "id": "aud_1793548528437_zijo2",
+      "userId": "usr_1793548528437_mecc5",
+      "userName": "Attacker User",
+      "action": "USER_REGISTERED",
+      "entityType": "User",
+      "entityId": "usr_1793548528437_mecc5",
+      "details": "New citizen registered from City, National / Other",
+      "timestamp": "2026-11-01T15:55:28.437Z"
+    },
+    {
+      "id": "aud_1793548528350_id06k",
+      "userId": "usr_admin_01",
+      "userName": "Dr. Rajeshwari Sen",
+      "action": "USER_LOGIN",
+      "entityType": "User",
+      "entityId": "usr_admin_01",
+      "details": "User logged in from 127.0.0.1",
+      "timestamp": "2026-11-01T15:55:28.350Z"
+    },
     {
       "id": "aud_1793522442614_2aek1",
       "userId": "usr_1793522428128_dh61u",

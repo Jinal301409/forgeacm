@@ -141,7 +141,7 @@ export const ComplaintManagementPage: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#11182B] border border-white/[0.1] rounded-xl px-3 py-2 text-white"
+            className="bg-[#080B12] border border-white/[0.1] rounded-xl px-3 py-2 text-white"
           >
             <option value="All">All Statuses</option>
             <option value="Submitted">Submitted</option>
@@ -154,7 +154,7 @@ export const ComplaintManagementPage: React.FC = () => {
           <select
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
-            className="bg-[#11182B] border border-white/[0.1] rounded-xl px-3 py-2 text-white"
+            className="bg-[#080B12] border border-white/[0.1] rounded-xl px-3 py-2 text-white"
           >
             <option value="All">All Severities</option>
             <option value="Critical">Critical</option>
@@ -170,7 +170,7 @@ export const ComplaintManagementPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search complaint ID or title..."
-            className="bg-[#11182B] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
+            className="bg-[#080B12] border border-white/[0.1] rounded-xl px-4 py-2 text-xs text-white"
           />
           <button type="submit" className="px-4 py-2 rounded-xl bg-[#477BFF] text-white text-xs font-semibold">
             Filter
@@ -241,7 +241,7 @@ export const ComplaintManagementPage: React.FC = () => {
                 <select
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-3 py-2 text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-3 py-2 text-white"
                 >
                   <option value="Submitted">Submitted</option>
                   <option value="Under Review">Under Review</option>
@@ -256,7 +256,7 @@ export const ComplaintManagementPage: React.FC = () => {
                   value={statusRemarks}
                   onChange={(e) => setStatusRemarks(e.target.value)}
                   placeholder="Official dispatch remarks / SLA explanation..."
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl p-2.5 text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl p-2.5 text-white"
                 />
 
                 {newStatus === 'Resolved' && (
@@ -265,7 +265,7 @@ export const ComplaintManagementPage: React.FC = () => {
                     value={resolutionNotes}
                     onChange={(e) => setResolutionNotes(e.target.value)}
                     placeholder="Resolution notes: Work completed, materials used, inspection verification..."
-                    className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl p-2.5 text-white"
+                    className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl p-2.5 text-white"
                   />
                 )}
 
@@ -287,7 +287,7 @@ export const ComplaintManagementPage: React.FC = () => {
                 <select
                   value={selectedOfficerId}
                   onChange={(e) => setSelectedOfficerId(e.target.value)}
-                  className="w-full bg-[#11182B] border border-white/[0.1] rounded-xl px-3 py-2 text-white"
+                  className="w-full bg-[#080B12] border border-white/[0.1] rounded-xl px-3 py-2 text-white"
                 >
                   <option value="">Select Officer / Ward Engineer</option>
                   {officers.map((off) => (

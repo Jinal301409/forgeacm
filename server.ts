@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { apiRouter } from './server/routes.js';
 import { loadDatabase } from './server/db.js';
+import { connectToMongoDB, closeMongoDB } from './server/mongodb.js';
 
 dotenv.config();
 
@@ -21,10 +22,26 @@ async function startServer() {
   const PORT = process.env.PORT || 3000;
   const isProd = process.env.NODE_ENV === 'production';
 
-  // Initialize persistent database
-  loadDatabase();
+  // Security headers middleware
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+  });
 
-  app.use(cors());
+  // CORS Configuration
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map((s) => s.trim()) || ['*'];
+  app.use(
+    cors({
+      origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
+      credentials: true,
+      methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    })
+  );
+
   app.use(express.json({ limit: '25mb' }));
   app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
@@ -34,6 +51,12 @@ async function startServer() {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
   app.use('/uploads', express.static(uploadsDir));
+
+  // Initialize local fallback database cache
+  loadDatabase();
+
+  // Connect to MongoDB Atlas
+  await connectToMongoDB();
 
   // Mount API endpoints
   app.use('/api', apiRouter);
@@ -63,9 +86,21 @@ async function startServer() {
     res.status(500).json({ error: err.message || 'An unexpected internal server error occurred.' });
   });
 
-  app.listen(Number(PORT), '0.0.0.0', () => {
+  const server = app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`CivicLens AI full-stack server running on http://0.0.0.0:${PORT}`);
   });
+
+  // Graceful shutdown
+  const shutdown = async (signal: string) => {
+    console.log(`[Server] Received ${signal}. Shutting down gracefully...`);
+    server.close(async () => {
+      await closeMongoDB();
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 startServer().catch((err) => {

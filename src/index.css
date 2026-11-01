@@ -533,3 +533,15 @@ html.light ::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.25); }
     transition: none !important;
   }
 }
+
+/* ── Live page backgrounds (Proofline-style) ──────────────────────────
+   When a PageBackground is active, the layout's normal solid black must
+   become see-through so the animation can show behind the content.
+   `isolate` makes a private stacking context, so the fixed layer (z-index:-1)
+   sits behind the content but in front of the page's base colour. */
+.live-bg-on { isolation: isolate; }
+.live-bg-on .app-bg,
+.live-bg-on .auth-canvas { background-color: transparent !important; }
+.live-bg-fade { animation: liveBgFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes liveBgFade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .live-bg-fade { animation: none; } }
