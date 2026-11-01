@@ -52,6 +52,20 @@
       "occupation": "",
       "category": "General",
       "createdAt": "2026-11-01T05:23:21.154Z"
+    },
+    {
+      "id": "usr_1793521017775_pian3",
+      "name": "karan",
+      "email": "visavadiyaastha5@gmail.com",
+      "passwordHash": "$2b$10$ZROmhksphOT58pe97WAOpuXTpXoveheGUbsnEcE7s.rrROvtR3uVq",
+      "phone": "",
+      "role": "citizen",
+      "state": "Gujarat",
+      "city": "Ahmedabad",
+      "preferredLanguage": "English",
+      "occupation": "",
+      "category": "General",
+      "createdAt": "2026-11-01T08:16:57.775Z"
     }
   ],
   "policyDocuments": [
@@ -908,6 +922,15 @@
   ],
   "notifications": [
     {
+      "id": "notif_1793521017797_u360w",
+      "userId": "usr_1793521017775_pian3",
+      "title": "Welcome to CivicLens AI",
+      "message": "Your civic intelligence account is active. Explore policies, report local issues, or check scheme eligibility.",
+      "type": "success",
+      "read": true,
+      "createdAt": "2026-11-01T08:16:57.797Z"
+    },
+    {
       "id": "notif_1793510601235_7ptz1",
       "userId": "usr_1793510601154_yzng7",
       "title": "Welcome to CivicLens AI",
@@ -978,6 +1001,26 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "aud_1793521343238_tsx98",
+      "userId": "usr_1793521017775_pian3",
+      "userName": "karan",
+      "action": "USER_LOGIN",
+      "entityType": "User",
+      "entityId": "usr_1793521017775_pian3",
+      "details": "User logged in from 127.0.0.1",
+      "timestamp": "2026-11-01T08:22:23.238Z"
+    },
+    {
+      "id": "aud_1793521017786_h1mk3",
+      "userId": "usr_1793521017775_pian3",
+      "userName": "karan",
+      "action": "USER_REGISTERED",
+      "entityType": "User",
+      "entityId": "usr_1793521017775_pian3",
+      "details": "New citizen registered from Ahmedabad, Gujarat",
+      "timestamp": "2026-11-01T08:16:57.787Z"
+    },
     {
       "id": "aud_1793510601177_ewe2w",
       "userId": "usr_1793510601154_yzng7",
