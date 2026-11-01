@@ -36,7 +36,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (body) {
         body.classList.add('dark');
         body.classList.remove('light');
-        body.style.backgroundColor = '#0B1020';
+        body.style.backgroundColor = '#000000';
         body.style.color = '#F8FAFC';
       }
     } else {

@@ -77,15 +77,19 @@ export const FeaturesPage: React.FC = () => {
   ];
 
   return (
-    <div className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+    <div className="relative overflow-hidden app-bg app-text" style={{ paddingTop: 'clamp(96px,12vh,128px)' }}>
+      <div className="orb-cyan" style={{ opacity: 0.5 }} />
+      <div className="orb-blue" style={{ opacity: 0.4 }} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 space-y-16 relative z-10">
       <div className="text-center max-w-3xl mx-auto space-y-4">
-        <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[#38D9E6] px-3 py-1 rounded-full bg-[#38D9E6]/10 border border-[#38D9E6]/20">
+        <span className="section-tag">
+          <span style={{ width: '6px', height: '6px', borderRadius: '9999px', background: '#38D9E6', flexShrink: 0 }} />
           Platform Architecture
         </span>
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
+        <h1 className="text-4xl sm:text-5xl font-extrabold app-text tracking-tight" style={{ letterSpacing: '-0.03em' }}>
           Comprehensive Civic Intelligence Toolkit
         </h1>
-        <p className="text-base text-slate-400 leading-relaxed">
+        <p className="text-base app-text-muted leading-relaxed">
           Explore the modular technologies powering transparent governance, multimodal triage, and citizen empowerment.
         </p>
       </div>
@@ -94,36 +98,37 @@ export const FeaturesPage: React.FC = () => {
         {features.map((f, i) => {
           const Icon = f.icon;
           return (
-            <div key={i} className="glass-card p-6 rounded-2xl space-y-3 flex flex-col justify-between">
+            <div key={i} className="glass-card tint-card p-6 rounded-2xl space-y-3 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className={`w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center ${f.color}`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${f.color}`} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
                     <Icon className="w-5 h-5" />
                   </div>
-                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider px-2 py-0.5 rounded bg-white/[0.03] border border-white/[0.06]">
+                  <span className="section-tag" style={{ padding: '2px 8px', fontSize: '9px' }}>
                     {f.tag}
                   </span>
                 </div>
-                <h3 className="text-base font-bold text-white">{f.title}</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">{f.description}</p>
+                <h3 className="text-base font-bold app-text">{f.title}</h3>
+                <p className="text-xs app-text-muted leading-relaxed">{f.description}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-      <div className="p-8 rounded-3xl bg-gradient-to-r from-[#111A35] to-[#121B38] border border-white/[0.1] flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="glass-panel p-8 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-1">
-          <h3 className="text-xl font-bold text-white">Experience CivicLens AI Today</h3>
-          <p className="text-sm text-slate-400">Create your citizen account or log in as an administrator for instant review.</p>
+          <h3 className="text-xl font-bold app-text">Experience CivicLens AI Today</h3>
+          <p className="text-sm app-text-muted">Create your citizen account or log in as an administrator for instant review.</p>
         </div>
         <Link
           to="/register"
-          className="px-6 py-3 rounded-xl font-semibold text-white bg-[#477BFF] hover:bg-[#386df0] transition-all flex items-center gap-2 shadow-lg shadow-[#477BFF]/25"
+          className="btn-brand flex items-center gap-2"
         >
           <span>Get Started</span>
           <ArrowRight className="w-4 h-4" />
         </Link>
+      </div>
       </div>
     </div>
   );
