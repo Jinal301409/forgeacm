@@ -1006,6 +1006,36 @@
   ],
   "auditLogs": [
     {
+      "id": "aud_1793673075371_2puzl",
+      "userId": "usr_citizen_01",
+      "userName": "Priya Patel",
+      "action": "USER_LOGIN",
+      "entityType": "User",
+      "entityId": "usr_citizen_01",
+      "details": "User logged in from 127.0.0.1",
+      "timestamp": "2026-11-03T02:31:15.371Z"
+    },
+    {
+      "id": "aud_1793673065485_5rtll",
+      "userId": "usr_citizen_01",
+      "userName": "Priya Patel",
+      "action": "USER_LOGIN",
+      "entityType": "User",
+      "entityId": "usr_citizen_01",
+      "details": "User logged in from 127.0.0.1",
+      "timestamp": "2026-11-03T02:31:05.485Z"
+    },
+    {
+      "id": "aud_1793673001813_zfs60",
+      "userId": "usr_citizen_01",
+      "userName": "Priya Patel",
+      "action": "USER_LOGIN",
+      "entityType": "User",
+      "entityId": "usr_citizen_01",
+      "details": "User logged in from 127.0.0.1",
+      "timestamp": "2026-11-03T02:30:01.813Z"
+    },
+    {
       "id": "aud_1793554688878_2222u",
       "userId": "usr_1793554688609_fkp15",
       "userName": "Verification Citizen",

@@ -14,6 +14,11 @@ import { connectToMongoDB, closeMongoDB } from './server/mongodb.js';
 
 dotenv.config();
 
+// Automatically upgrade deprecated models to gemini-3.8-flash
+if (!process.env.GEMINI_MODEL || process.env.GEMINI_MODEL.startsWith('gemini-2.') || process.env.GEMINI_MODEL.startsWith('gemini-1.')) {
+  process.env.GEMINI_MODEL = 'gemini-3.8-flash';
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

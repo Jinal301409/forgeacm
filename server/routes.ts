@@ -158,7 +158,7 @@ apiRouter.get('/health', async (_req, res: Response) => {
       ai: {
         provider: 'Google Gemini',
         isConfigured: isGeminiConfigured(),
-        model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+        model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
       },
       storage: {
         provider: storageProvider(),
@@ -184,7 +184,7 @@ apiRouter.get('/system/status', async (_req, res: Response) => {
     },
     ai: {
       provider: 'Google Gemini',
-      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+      model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
       isConfigured: isGeminiConfigured(),
       capabilities: [
         'Multilingual Policy Analysis',

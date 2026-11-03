@@ -6,7 +6,26 @@
 
 import { GoogleGenAI, Type } from '@google/genai';
 
-const getGeminiModel = () => process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const DEPRECATED_MODELS = [
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
+  'gemini-pro',
+  'gemini-2.0-flash',
+  'gemini-2.0-pro',
+  'gemini-2.0-flash-thinking',
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+  'gemini-2.5-flash-lite',
+];
+
+export const getGeminiModel = (): string => {
+  const envModel = process.env.GEMINI_MODEL?.trim();
+  if (!envModel || DEPRECATED_MODELS.includes(envModel) || envModel.startsWith('gemini-2.') || envModel.startsWith('gemini-1.')) {
+    return 'gemini-3.8-flash';
+  }
+  return envModel;
+};
+
 const GEMINI_MODEL = getGeminiModel();
 
 function getAI(): GoogleGenAI {
@@ -563,7 +582,7 @@ export async function extractTextWithGemini(buffer: Buffer, mimeType: string): P
   }
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: GEMINI_MODEL,
     contents: {
       parts: [
         { inlineData: { mimeType, data: buffer.toString('base64') } },
@@ -585,7 +604,7 @@ export async function synthesizeSpeechWithGemini(text: string): Promise<Buffer> 
     throw new Error('GEMINI_API_KEY is not configured.');
   }
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-preview-tts',
+    model: 'gemini-3.8-flash-lite-tts',
     contents: [{ role: 'user', parts: [{ text }] }],
     config: {
       responseModalities: ['AUDIO'],
@@ -594,12 +613,17 @@ export async function synthesizeSpeechWithGemini(text: string): Promise<Buffer> 
   });
   const part: any = response.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData?.data);
   if (!part) throw new Error('Voice model returned no audio.');
-  const pcm = Buffer.from(part.inlineData.data, 'base64');
+  const rawBytes = Buffer.from(part.inlineData.data, 'base64');
 
-  // Pack into standard WAV container
+  // If already a complete WAV file (unary default from gemini-3.8-flash-lite-tts), return directly
+  if (rawBytes.length >= 4 && rawBytes.slice(0, 4).toString('ascii') === 'RIFF') {
+    return rawBytes;
+  }
+
+  // Pack raw PCM into standard WAV container if header is missing
   const header = Buffer.alloc(44);
   header.write('RIFF', 0);
-  header.writeUInt32LE(36 + pcm.length, 4);
+  header.writeUInt32LE(36 + rawBytes.length, 4);
   header.write('WAVE', 8);
   header.write('fmt ', 12);
   header.writeUInt32LE(16, 16);
@@ -610,6 +634,6 @@ export async function synthesizeSpeechWithGemini(text: string): Promise<Buffer> 
   header.writeUInt16LE(2, 32);
   header.writeUInt16LE(16, 34);
   header.write('data', 36);
-  header.writeUInt32LE(pcm.length, 40);
-  return Buffer.concat([header, pcm]);
+  header.writeUInt32LE(rawBytes.length, 40);
+  return Buffer.concat([header, rawBytes]);
 }

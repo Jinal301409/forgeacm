@@ -287,7 +287,7 @@ Every single `fetch()` call across `src/` was mapped directly to the server rout
 - **Policy Lifecycle Endpoints:** `PATCH /api/policies/:id`, `PATCH /api/policies/:id/verify`, `DELETE /api/policies/:id`.
 
 ### Phase 4: Production AI Layer (Gemini)
-- **Model Configuration:** Make model configurable via `GEMINI_MODEL` (defaulting to current `gemini-2.5-flash`). Verify model connectivity on startup.
+- **Model Configuration:** Make model configurable via `GEMINI_MODEL` (defaulting to current `gemini-3.8-flash`). Verify model connectivity on startup.
 - **Resilience:** AbortController timeouts (30s), exponential backoff retries on 429/503 errors.
 - **Structured Output & Zod Validation:** Validate and sanitize every Gemini JSON response. Fall back to clean defaults if malformed.
 - **Prompt Injection Defense:** Wrap user claims and policy texts in XML/boundary tags with explicit instructions to ignore embedded system overrides.
